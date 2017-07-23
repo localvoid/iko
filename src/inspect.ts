@@ -26,7 +26,7 @@ let objectInspector = function (obj: any, depth: number, visited: Set<any>): str
     return obj.toString();
   }
 
-  if (depth > 0 && typeof obj === "object") {
+  if (depth === 0 && typeof obj === "object") {
     return "[Object]";
   }
 
@@ -51,7 +51,7 @@ let objectInspector = function (obj: any, depth: number, visited: Set<any>): str
       return objectInspector(value, depth - 1, visited);
     };
 
-    if (Array.isArray(obj)) {
+    if (Array.isArray(obj) === true) {
       if (obj.length === 0) {
         return "[]";
       }

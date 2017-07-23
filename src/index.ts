@@ -426,14 +426,14 @@ export class FunctionAssertion extends Assertion<Function> {
     return this;
   }
 
-  toThrow(expected: Error, message?: ErrorMessage<Error, Function>): FunctionAssertion {
+  toThrow<E extends Function>(expected: E, message?: ErrorMessage<E, Function>): FunctionAssertion {
     let catched = false;
     let actual;
     try {
       this.obj();
     } catch (e) {
       actual = e;
-      if (expected === actual) {
+      if (actual instanceof expected) {
         catched = true;
       }
     }
@@ -454,14 +454,14 @@ export class FunctionAssertion extends Assertion<Function> {
     return this;
   }
 
-  notToThrow(expected: Error, message?: ErrorMessage<Error, Function>): FunctionAssertion {
+  notToThrow<E extends Function>(expected: E, message?: ErrorMessage<E, Function>): FunctionAssertion {
     let catched = false;
     let actual;
     try {
       this.obj();
     } catch (e) {
       actual = e;
-      if (expected === actual) {
+      if (actual instanceof expected) {
         catched = true;
       }
     }
@@ -583,6 +583,7 @@ export class MapAssertion<K, V> extends Assertion<Map<K, V>> {
 
 export interface Assertion<T> {
   toBeNull(): NullAssertion;
+  notToBeNull(): Assertion<T>;
 }
 
 Assertion.prototype.toBeNull = function (
@@ -600,6 +601,26 @@ Assertion.prototype.toBeNull = function (
       actual,
       false,
       this.toBeNull,
+    );
+  }
+  return this as any as NullAssertion;
+};
+
+Assertion.prototype.notToBeNull = function (
+  message?: ErrorMessage<string, string, null>,
+): NullAssertion {
+  const expected = "not null";
+  const actual = this.obj;
+  if (actual === null) {
+    throw new AssertionError(
+      formatError(
+        (e, a, o) => `Expected ${inspect(o)} not to be a null`,
+        expected, actual, this.obj, message,
+      ),
+      expected,
+      actual,
+      false,
+      this.notToBeNull,
     );
   }
   return this as any as NullAssertion;
@@ -789,7 +810,7 @@ export class NumberAssertion extends Assertion<number> {
     const actual = this.obj;
     const actualAbs = Math.abs(actual);
     const expectedAbs = Math.abs(expected);
-    if ((expected - actual) <= ((actualAbs < expectedAbs ? expectedAbs : actualAbs) * epsilon)) {
+    if ((expected - actual) >= ((actualAbs < expectedAbs ? expectedAbs : actualAbs) * epsilon)) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${a} to be definetely less than ${e}`,
@@ -813,7 +834,7 @@ export class NumberAssertion extends Assertion<number> {
     const actual = this.obj;
     const actualAbs = Math.abs(actual);
     const expectedAbs = Math.abs(expected);
-    if ((expected - actual) > ((actualAbs < expectedAbs ? expectedAbs : actualAbs) * epsilon)) {
+    if ((expected - actual) < ((actualAbs < expectedAbs ? expectedAbs : actualAbs) * epsilon)) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${a} not to be definetely less than ${e}`,
@@ -835,7 +856,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual > expected) {
+    if (actual <= expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${a} to be greater than ${e}`,
@@ -857,7 +878,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual <= expected) {
+    if (actual > expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${a} not to be greater than ${e}`,
@@ -878,7 +899,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual >= expected) {
+    if (actual < expected) {
       throw new AssertionError(
         formatError(
           (e, a, o) => `Expected ${a} to be greater than or equal ${e}`,
@@ -899,7 +920,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual < expected) {
+    if (actual >= expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${e} not to be greater than or equal ${a}`,
@@ -920,7 +941,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual < expected) {
+    if (actual >= expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${e} to be less than ${a}`,
@@ -941,7 +962,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual >= expected) {
+    if (actual < expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${e} not to be less than ${a}`,
@@ -962,7 +983,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual <= expected) {
+    if (actual > expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${e} to be less than or equal ${a}`,
@@ -983,7 +1004,7 @@ export class NumberAssertion extends Assertion<number> {
   ): NumberAssertion {
     const expected = number;
     const actual = this.obj;
-    if (actual > expected) {
+    if (actual <= expected) {
       throw new AssertionError(
         formatError(
           (e, a) => `Expected ${e} not to be less than or equal ${a}`,
@@ -1451,6 +1472,7 @@ export class SymbolAssertion extends Assertion<Symbol> { }
 
 export interface Assertion<T> {
   toBeUndefined(): UndefinedAssertion;
+  notToBeUndefined(): UndefinedAssertion;
 }
 
 Assertion.prototype.toBeUndefined = function (
@@ -1468,6 +1490,26 @@ Assertion.prototype.toBeUndefined = function (
       actual,
       false,
       this.toBeUndefined,
+    );
+  }
+  return this as any as UndefinedAssertion;
+};
+
+Assertion.prototype.notToBeUndefined = function (
+  message?: ErrorMessage<string, string, null>,
+): UndefinedAssertion {
+  const expected = "not undefined";
+  const actual = this.obj;
+  if (actual === undefined) {
+    throw new AssertionError(
+      formatError(
+        (e, a, o) => `Expected ${inspect(o)} not to be undefined`,
+        expected, actual, this.obj, message,
+      ),
+      expected,
+      actual,
+      false,
+      this.notToBeUndefined,
     );
   }
   return this as any as UndefinedAssertion;

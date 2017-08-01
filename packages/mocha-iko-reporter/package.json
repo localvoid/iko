@@ -1,0 +1,37 @@
+{
+  "name": "mocha-iko-reporter",
+  "version": "0.1.0",
+  "main": "index.js",
+  "description": "Mocha reporter for iko assertion library",
+  "license": "MIT",
+  "author": {
+    "name": "Boris Kaul",
+    "email": "localvoid@gmail.com",
+    "url": "https://github.com/localvoid"
+  },
+  "keywords": [
+    "iko",
+    "mocha-reporter"
+  ],
+  "homepage": "https://github.com/localvoid/iko",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/localvoid/iko"
+  },
+  "bugs": {
+    "url": "https://github.com/localvoid/iko/issues"
+  },
+  "github": "https://github.com/localvoid/iko",
+  "files": [
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {},
+  "peerDependencies": {},
+  "dependencies": {
+    "chalk": "^2.0.1",
+    "iko-error-chalk": "^0.1.0"
+  },
+  "devDependencies": {}
+}

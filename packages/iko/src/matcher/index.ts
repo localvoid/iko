@@ -146,6 +146,15 @@ export function matchAnyLoose(a: any, b: any): boolean {
   return Object.is(a, b);
 }
 
+export function matchException(a: any, b: Error | ErrorConstructor): boolean {
+  if (b instanceof Error) {
+    return a.constructor === b.constructor || a instanceof b.constructor;
+  } else if (b.prototype instanceof Error || b === Error) {
+    return a.constructor === b || a instanceof b;
+  }
+  return false;
+}
+
 export const m = {
   includesString: function (s: string): Matcher {
     return new Matcher(function (value: any) {

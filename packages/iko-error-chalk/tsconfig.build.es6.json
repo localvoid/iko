@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/es6",
+    "declarationDir": "dist/typings",
+    "declaration": true,
+    "sourceMap": true,
+    "importHelpers": true,
+    "noEmitHelpers": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

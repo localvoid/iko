@@ -95,12 +95,20 @@ let objectInspector = function (obj: any, depth: number, visited: Set<any>): str
       return collectionOf("Map", obj.size, parts);
     }
 
+    if (obj instanceof WeakMap) {
+      return "[WeakMap]";
+    }
+
     if (obj instanceof Set) {
       const parts: string[] = [];
       obj.forEach(function (value) {
         parts.push(deepInspect(value, obj));
       });
       return collectionOf("Set", obj.size, parts);
+    }
+
+    if (obj instanceof WeakSet) {
+      return "[WeakSet]";
     }
 
     if (obj instanceof Number) {

@@ -1,0 +1,50 @@
+{
+  "name": "iko-karma-snapshot",
+  "version": "0.2.0",
+  "main": "dist/cjs/index.js",
+  "module": "dist/es5/index.js",
+  "es2015": "dist/es6/index.js",
+  "typings": "dist/typings/index.d.ts",
+  "description": "Karma snapshot plugin for iko library",
+  "license": "MIT",
+  "author": {
+    "name": "Boris Kaul",
+    "email": "localvoid@gmail.com",
+    "url": "https://github.com/localvoid"
+  },
+  "keywords": [
+    "iko",
+    "snapshot",
+    "karma-snapshot"
+  ],
+  "homepage": "https://github.com/localvoid/iko",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/localvoid/iko"
+  },
+  "bugs": {
+    "url": "https://github.com/localvoid/iko/issues"
+  },
+  "github": "https://github.com/localvoid/iko",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prepublish": "npm run clean && npm run dist",
+    "clean": "../../node_modules/.bin/rimraf ./dist",
+    "dist": "npm run dist:es6 && npm run dist:es5 && npm run dist:cjs",
+    "dist:es6": "../../node_modules/.bin/tsc -p ./tsconfig.build.es6.json",
+    "dist:es5": "../../node_modules/.bin/tsc -p ./tsconfig.build.es5.json",
+    "dist:cjs": "../../node_modules/.bin/tsc -p ./tsconfig.build.cjs.json"
+  },
+  "peerDependencies": {
+    "rtext-writer": "^0.1.0",
+    "tslib": "^1.7.1",
+    "iko": "^0.3.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,15 +1,17 @@
 export { AssertionError } from "./error";
+export { ErrorMessageWriter, errMsg, r, e, stringify } from "./stringify";
 export { Matcher, m } from "./matcher";
-import { diff } from "./diff";
+export { diff } from "./diff";
 
 /**
  * TypeScript doesn't allow augmentation of re-exported modules:
  * https://github.com/Microsoft/TypeScript/issues/12607
  */
 import { RichText } from "rtext";
-import { richText } from "rtext-writer";
+import { rt } from "rtext-writer";
 import { AssertionError } from "./error";
-import { mh, r, e } from "./stringify";
+import { diff } from "./diff";
+import { errMsg, r, e } from "./stringify";
 import { Matcher, matchArray, matchException } from "./matcher";
 
 export class Assertion<T> {
@@ -28,80 +30,76 @@ export class Assertion<T> {
     message: (expected: E, actual?: T) => RichText,
     expected: E,
     actual?: T,
-  ): Assertion<T> {
+  ): this {
     const pass = ((typeof expr === "function") ? expr() : expr) === true;
     if (pass === false) {
-      throw new AssertionError(message(expected, actual), actual, expected, this.assert);
+      throw new AssertionError(message(expected, actual), this.assert);
     }
     return this;
   }
 
-  toBeFalsy(): Assertion<T> {
+  toBeFalsy(): this {
     const received = this.obj;
     const pass = !received;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeFalsy", "received", ""))
-        .write("Expected value to be truthy, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeFalsy", "received", "")
+        .info("Expected value to be truthy, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, false, this.toBeFalsy);
+      throw new AssertionError(message.compose(), this.toBeFalsy);
     }
     return this;
   }
 
-  toBeTruthy(): Assertion<T> {
+  toBeTruthy(): this {
     const received = this.obj;
     const pass = !!received;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeTruthy", "received", ""))
-        .write("Expected value to be truthy, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeTruthy", "received", "")
+        .info("Expected value to be truthy, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeTruthy);
+      throw new AssertionError(message.compose(), this.toBeTruthy);
     }
     return this;
   }
 
-  toBe(value: T): Assertion<T> {
+  toBe(value: T): this {
     const expected = value;
     const received = this.obj;
     const pass = expected === received;
     if (!pass) {
       const diffText = diff(expected, received);
-      const message = richText()
-        .write(mh("toBe"))
-        .write("Expected value to be (strict equality ===):\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toBe")
+        .info("Expected value to be (strict equality ===):\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
       if (diffText !== null) {
-        message
-          .begin("diff")
-          .write("\n", "Difference:\n\n")
-          .write(diffText)
-          .end("diff");
+        message.diff("\nDifference:\n\n", diffText);
       }
 
-      throw new AssertionError(message.compose(), received, expected, this.toBe);
+      throw new AssertionError(message.compose(), this.toBe);
     }
     return this;
   }
 
-  notToBe(value: T): Assertion<T> {
+  notToBe(value: T): this {
     const expected = value;
     const received = this.obj;
     const pass = expected !== received;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBe"))
-        .write("Expected value not to be (strict inequality !==):\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToBe")
+        .info("Expected value not to be (strict inequality !==):\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, expected, this.toBe);
+      throw new AssertionError(message.compose(), this.toBe);
     }
     return this;
   }
@@ -110,66 +108,66 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = received === null;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeNull", "received", ""))
-        .write("Expected value to be null, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeNull", "received", "")
+        .info("Expected value to be null, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeNull);
+      throw new AssertionError(message.compose(), this.toBeNull);
     }
     return this as any as NullAssertion;
   }
 
-  notToBeNull(): NullAssertion {
+  notToBeNull(): this {
     const received = this.obj;
     const pass = received !== null;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeNull", "received", ""))
-        .write("Expected value not to be null\n");
+      const message = errMsg()
+        .matcherHint("notToBeNull", "received", "")
+        .info("Expected value not to be null\n");
 
-      throw new AssertionError(message.compose(), received, true, this.notToBeNull);
+      throw new AssertionError(message.compose(), this.notToBeNull);
     }
-    return this as any as NullAssertion;
+    return this;
   }
 
   toBeUndefined(): UndefinedAssertion {
     const received = this.obj;
     const pass = received === undefined;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeUndefined", "received", ""))
-        .write("Expected value to be undefined, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeUndefined", "received", "")
+        .info("Expected value to be undefined, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeUndefined);
+      throw new AssertionError(message.compose(), this.toBeUndefined);
     }
     return this as any as UndefinedAssertion;
   }
 
-  notToBeUndefined(): UndefinedAssertion {
+  notToBeUndefined(): this {
     const received = this.obj;
     const pass = received !== undefined;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeUndefined", "received", ""))
-        .write("Expected value not to be undefined\n");
+      const message = errMsg()
+        .matcherHint("notToBeUndefined", "received", "")
+        .info("Expected value not to be undefined\n");
 
-      throw new AssertionError(message.compose(), received, true, this.notToBeUndefined);
+      throw new AssertionError(message.compose(), this.notToBeUndefined);
     }
-    return this as any as UndefinedAssertion;
+    return this;
   }
 
   toBeObject<O extends object>(): ObjectAssertion<O> {
     const received = this.obj;
     const pass = typeof received === "object";
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeObject", "received", ""))
-        .write("Expected value to be an object, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeObject", "received", "")
+        .info("Expected value to be an object, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeObject);
+      throw new AssertionError(message.compose(), this.toBeObject);
     }
     return this as any as ObjectAssertion<O>;
   }
@@ -178,12 +176,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && Array.isArray(received);
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeArray", "received", ""))
-        .write("Expected value to be an array, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeArray", "received", "")
+        .info("Expected value to be an array, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeArray);
+      throw new AssertionError(message.compose(), this.toBeArray);
     }
     return this as any as ArrayAssertion<U>;
   }
@@ -192,12 +190,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "boolean";
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeBoolean", "received", ""))
-        .write("Expected value to be a boolean, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeBoolean", "received", "")
+        .info("Expected value to be a boolean, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeBoolean);
+      throw new AssertionError(message.compose(), this.toBeBoolean);
     }
     return this as any as BooleanAssertion;
   }
@@ -206,12 +204,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "number";
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeNumber", "received", ""))
-        .write("Expected value to be a number, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeNumber", "received", "")
+        .info("Expected value to be a number, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeNumber);
+      throw new AssertionError(message.compose(), this.toBeNumber);
     }
     return this as any as NumberAssertion;
   }
@@ -220,12 +218,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "string";
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeString", "received", ""))
-        .write("Expected value to be a string, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeString", "received", "")
+        .info("Expected value to be a string, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeString);
+      throw new AssertionError(message.compose(), this.toBeString);
     }
     return this as any as StringAssertion;
   }
@@ -234,12 +232,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "function";
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeFunction", "received", ""))
-        .write("Expected value to be a function, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeFunction", "received", "")
+        .info("Expected value to be a function, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeFunction);
+      throw new AssertionError(message.compose(), this.toBeFunction);
     }
     return this as any as FunctionAssertion;
   }
@@ -248,12 +246,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "symbol";
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeSymbol", "received", ""))
-        .write("Expected value to be a symbol, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeSymbol", "received", "")
+        .info("Expected value to be a symbol, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeSymbol);
+      throw new AssertionError(message.compose(), this.toBeSymbol);
     }
     return this as any as SymbolAssertion;
   }
@@ -262,12 +260,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof Date;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeDate", "received", ""))
-        .write("Expected value to be a Date, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeDate", "received", "")
+        .info("Expected value to be a Date, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeDate);
+      throw new AssertionError(message.compose(), this.toBeDate);
     }
     return this as any as DateAssertion;
   }
@@ -276,12 +274,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof RegExp;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeRegExp", "received", ""))
-        .write("Expected value to be a RegExp, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeRegExp", "received", "")
+        .info("Expected value to be a RegExp, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeRegExp);
+      throw new AssertionError(message.compose(), this.toBeRegExp);
     }
     return this as any as RegExpAssertion;
   }
@@ -290,12 +288,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof Error;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeError", "received", ""))
-        .write("Expected value to be an Error, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeError", "received", "")
+        .info("Expected value to be an Error, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeError);
+      throw new AssertionError(message.compose(), this.toBeError);
     }
     return this as any as ErrorAssertion<E>;
   }
@@ -304,12 +302,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof Map;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeMap", "received", ""))
-        .write("Expected value to be a Map, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeMap", "received", "")
+        .info("Expected value to be a Map, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeMap);
+      throw new AssertionError(message.compose(), this.toBeMap);
     }
     return this as any as MapAssertion<K, V>;
   }
@@ -318,12 +316,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof WeakMap;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeWeakMap", "received", ""))
-        .write("Expected value to be a WeakMap, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeWeakMap", "received", "")
+        .info("Expected value to be a WeakMap, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeWeakMap);
+      throw new AssertionError(message.compose(), this.toBeWeakMap);
     }
     return this as any as WeakMapAssertion<K, V>;
   }
@@ -332,12 +330,12 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof Set;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeSet", "received", ""))
-        .write("Expected value to be a Set, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeSet", "received", "")
+        .info("Expected value to be a Set, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeSet);
+      throw new AssertionError(message.compose(), this.toBeSet);
     }
     return this as any as SetAssertion<V>;
   }
@@ -346,148 +344,147 @@ export class Assertion<T> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof WeakSet;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeWeakSet", "received", ""))
-        .write("Expected value to be a WeakSet, instead received:\n")
-        .write("  ", r(received));
+      const message = errMsg()
+        .matcherHint("toBeWeakSet", "received", "")
+        .info("Expected value to be a WeakSet, instead received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeWeakSet);
+      throw new AssertionError(message.compose(), this.toBeWeakSet);
     }
     return this as any as WeakSetAssertion<V>;
   }
 
-  toBeInstanceOf(type: Function): Assertion<T> {
+  toBeInstanceOf(type: Function): this {
     const received = this.obj;
     const expected = type;
     const pass = typeof received === "object" && received instanceof type;
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeInstanceOf"))
-        .write("Expected value to be an instance of:\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toBeInstanceOf")
+        .info("Expected value to be an instance of:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toBeInstanceOf);
+      throw new AssertionError(message.compose(), this.toBeInstanceOf);
     }
     return this;
   }
 
-  notToBeInstanceOf(type: Function): Assertion<T> {
+  notToBeInstanceOf(type: Function): this {
     const received = this.obj;
     const expected = type;
     const pass = typeof received !== "object" || (received instanceof type) === false;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeInstanceOf"))
-        .write("Expected value not to be an instance of:\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeInstanceOf")
+        .info("Expected value not to be an instance of:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.notToBeInstanceOf);
+      throw new AssertionError(message.compose(), this.notToBeInstanceOf);
     }
     return this;
   }
 }
 
 export class ArrayAssertion<T> extends Assertion<T[]> {
-  toHaveLength(length: number): ArrayAssertion<T> {
+  toHaveLength(length: number): this {
     const received = this.obj;
     const expected = length;
     const pass = received.length === expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("toHaveLength"))
-        .write("Expected array to have a length ", e(expected),
-        ", instead it have a length ", r(received.length), "\n");
+      const message = errMsg()
+        .matcherHint("toHaveLength")
+        .info(rt`Expected array to have a length ${e(expected)} instead it have a length ${r(received.length)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHaveLength);
+      throw new AssertionError(message.compose(), this.toHaveLength);
     }
     return this;
   }
 
-  notToHaveLength(length: number): ArrayAssertion<T> {
+  notToHaveLength(length: number): this {
     const received = this.obj;
     const expected = length;
     const pass = received.length !== expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHaveLength"))
-        .write("Expected array not to have a length ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHaveLength")
+        .info(rt`Expected array not to have a length ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHaveLength);
+      throw new AssertionError(message.compose(), this.notToHaveLength);
     }
     return this;
   }
 
-  toContain(value: T | Matcher): ArrayAssertion<T> {
+  toContain(value: T | Matcher): this {
     const received = this.obj;
     const expected = value;
     const pass = expected instanceof Matcher ?
       received.some((i) => expected.match(i)) :
       received.indexOf(expected) !== -1;
     if (!pass) {
-      const message = richText()
-        .write(mh("toContain"))
-        .write("Expected array to include:\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toContain")
+        .info("Expected array to contain:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toContain);
+      throw new AssertionError(message.compose(), this.toContain);
     }
     return this;
   }
 
-  notToContain(value: T | Matcher): ArrayAssertion<T> {
+  notToContain(value: T | Matcher): this {
     const received = this.obj;
     const expected = value;
     const pass = expected instanceof Matcher ?
       !received.some((i) => expected.match(i)) :
       received.indexOf(expected) === -1;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToContain"))
-        .write("Expected array not to contain:\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToContain")
+        .info("Expected array not to contain:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.notToContain);
+      throw new AssertionError(message.compose(), this.notToContain);
     }
 
     return this;
   }
 
-  toMatch(match: T[]): ArrayAssertion<T> {
+  toMatch(match: T[]): this {
     const received = this.obj;
     const expected = match;
     const pass = matchArray(received, expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("toMatch"))
-        .write("Expected array to match:\n")
-        .write("  ", e(expected), "\n")
-        .write("Received:\n")
-        .write("  ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toMatch")
+        .info("Expected array to match:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.toMatch);
+      throw new AssertionError(message.compose(), this.toMatch);
     }
     return this;
   }
 
-  notToMatch(match: T[]): ArrayAssertion<T> {
+  notToMatch(match: T[]): this {
     const received = this.obj;
     const expected = match;
     const pass = !matchArray(received, expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToMatch"))
-        .write("Expected array not to match:\n")
-        .write("  ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToMatch")
+        .info("Expected array not to match:\n")
+        .info("  ", e(expected), "\n");
 
-      throw new AssertionError(message.compose(), received, true, this.notToMatch);
+      throw new AssertionError(message.compose(), this.notToMatch);
     }
     return this;
   }
@@ -511,38 +508,35 @@ export class DateAssertion extends Assertion<Date> { }
 export class ErrorAssertion<E extends Error> extends Assertion<E> { }
 
 export class FunctionAssertion extends Assertion<Function> {
-  toHaveArgumentsLength(length: number): FunctionAssertion {
-    const received = this.obj;
+  toHaveArgumentsLength(length: number): this {
+    const received = this.obj.length;
     const expected = length;
-    const pass = received.length === expected;
+    const pass = received === expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("toHaveArgumentsLength"))
-        .write("Expected function to have arguments length ", e(expected),
-        ", instead it have arguments length ", r(received.length), "\n");
+      const message = errMsg()
+        .matcherHint("toHaveArgumentsLength")
+        .info(rt`Expected function to have arguments length ${e(expected)}, instead it have length ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHaveArgumentsLength);
+      throw new AssertionError(message.compose(), this.toHaveArgumentsLength);
     }
     return this;
   }
 
-  notToHaveArgumentsLength(length: number): FunctionAssertion {
+  notToHaveArgumentsLength(length: number): this {
     const received = this.obj;
     const expected = length;
     const pass = received.length !== expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHaveLength"))
-        .write("Expected function not to have arguments length ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHaveLength")
+        .info(rt`Expected function not to have arguments length ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHaveArgumentsLength);
+      throw new AssertionError(message.compose(), this.notToHaveArgumentsLength);
     }
     return this;
   }
 
-  toThrow<E extends Error | ErrorConstructor>(expected?: E): FunctionAssertion {
-    const received = this.obj;
-
+  toThrow<E extends Error | ErrorConstructor>(expected?: E): this {
     let pass = false;
     let throwed;
     try {
@@ -555,19 +549,17 @@ export class FunctionAssertion extends Assertion<Function> {
     }
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toThrow"))
-        .write("Expected function to throw an exception ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("toThrow")
+        .info(rt`Expected function to throw an exception ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toThrow);
+      throw new AssertionError(message.compose(), this.toThrow);
     }
 
     return this;
   }
 
-  notToThrow<E extends Error | ErrorConstructor>(expected?: E): FunctionAssertion {
-    const received = this.obj;
-
+  notToThrow<E extends Error | ErrorConstructor>(expected?: E): this {
     let pass = true;
     let throwed;
     try {
@@ -580,11 +572,11 @@ export class FunctionAssertion extends Assertion<Function> {
     }
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToThrow"))
-        .write("Expected function not to throw an exception ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToThrow")
+        .info(rt`Expected function not to throw an exception ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToThrow);
+      throw new AssertionError(message.compose(), this.notToThrow);
     }
 
     return this;
@@ -596,7 +588,7 @@ const rA = r("a", true);
 const eE = e("epsilon", true);
 
 export class NumberAssertion extends Assertion<number> {
-  toBeApproximatelyEqual(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  toBeApproximatelyEqual(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -604,21 +596,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = Math.abs(a - b) <= (aAbs < bAbs ? bAbs : aAbs) * epsilon;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeApproximatelyEqual", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("abs(", rA, " - ", eB, ") <= ",
-        "(abs(", rA, ") < abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, "\n\n")
-        .end("hint")
-        .write("Expected number to be approximately equal to ", e(b), ", intstead received ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeApproximatelyEqual", "received", "expected", "epsilon")
+        .hint(rt`abs(${rA} - ${eB}) <= (abs(${rA}) < abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE}\n\n`)
+        .info(rt`Expected number to be approximately equal to ${e(b)}, intstead received ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeApproximatelyEqual);
+      throw new AssertionError(message.compose(), this.toBeApproximatelyEqual);
     }
 
     return this;
   }
 
-  notToBeApproximatelyEqual(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  notToBeApproximatelyEqual(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -626,21 +615,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = !(Math.abs(a - b) <= (aAbs < bAbs ? bAbs : aAbs) * epsilon);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeApproximatelyEqual", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("!(abs(", rA, " - ", eB, ") <= ",
-        "(abs(", rA, ") < abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, ")\n\n")
-        .end("hint")
-        .write("Expected number not to be approximately equal to ", e(b), ", instead received ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeApproximatelyEqual", "received", "expected", "epsilon")
+        .hint(rt`!(abs(${rA} - ${eB}) <= (abs(${rA}) < abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE})\n\n`)
+        .info(rt`Expected number not to be approximately equal to ${e(b)}, instead received ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeApproximatelyEqual);
+      throw new AssertionError(message.compose(), this.notToBeApproximatelyEqual);
     }
 
     return this;
   }
 
-  toBeEssentiallyEqual(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  toBeEssentiallyEqual(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -648,21 +634,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = Math.abs(a - b) <= (aAbs > bAbs ? bAbs : aAbs) * epsilon;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeEssentiallyEqual", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("abs(", rA, " - ", eB, ") <= ",
-        "(abs(", rA, ") > abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, "\n\n")
-        .end("hint")
-        .write("Expected number to be essentially equal to ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeEssentiallyEqual", "received", "expected", "epsilon")
+        .hint(rt`abs(${rA} - ${eB}) <= (abs(${rA}) > abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE}\n\n`)
+        .info(rt`Expected number to be essentially equal to ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeEssentiallyEqual);
+      throw new AssertionError(message.compose(), this.toBeEssentiallyEqual);
     }
 
     return this;
   }
 
-  notToBeEssentiallyEqual(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  notToBeEssentiallyEqual(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -670,21 +653,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = !(Math.abs(a - b) <= (aAbs > bAbs ? bAbs : aAbs) * epsilon);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeEssentiallyEqual", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("!(abs(", rA, " - ", eB, ") <= ",
-        "(abs(", rA, ") > abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, ")\n\n")
-        .end("hint")
-        .write("Expected number not to be essentially equal to ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeEssentiallyEqual", "received", "expected", "epsilon")
+        .hint(rt`!(abs(${rA} - ${eB}) <= (abs(${rA}) > abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE}) \n\n`)
+        .info(rt`Expected number not to be essentially equal to ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeEssentiallyEqual);
+      throw new AssertionError(message.compose(), this.notToBeEssentiallyEqual);
     }
 
     return this;
   }
 
-  toBeDefinetelyGreaterThan(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  toBeDefinetelyGreaterThan(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -692,21 +672,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = (a - b) > (aAbs > bAbs ? bAbs : aAbs) * epsilon;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeDefinitelyGreaterThan", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("(", rA, " - ", eB, ") > ",
-        "(abs(", rA, ") > abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, "\n\n")
-        .end("hint")
-        .write("Expected number to be definetely greater than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeDefinitelyGreaterThan", "received", "expected", "epsilon")
+        .hint(rt`(${rA} - ${eB}) > (abs(${rA}) > abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE}\n\n`)
+        .info(rt`Expected number to be definetely greater than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeDefinetelyGreaterThan);
+      throw new AssertionError(message.compose(), this.toBeDefinetelyGreaterThan);
     }
 
     return this;
   }
 
-  notToBeDefinetelyGreaterThan(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  notToBeDefinetelyGreaterThan(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -714,21 +691,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = !((a - b) > (aAbs > bAbs ? bAbs : aAbs) * epsilon);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeDefinitelyGreaterThan", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("!((", rA, " - ", eB, ") > ",
-        "(abs(", rA, ") > abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, ")\n\n")
-        .end("hint")
-        .write("Expected number not to be definetely greater than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeDefinitelyGreaterThan", "received", "expected", "epsilon")
+        .hint(rt`!((${rA} - ${eB}) > (abs(${rA}) > abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE})\n\n`)
+        .info(rt`Expected number not to be definetely greater than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeDefinetelyGreaterThan);
+      throw new AssertionError(message.compose(), this.notToBeDefinetelyGreaterThan);
     }
 
     return this;
   }
 
-  toBeDefinetelyLessThan(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  toBeDefinetelyLessThan(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -736,21 +710,18 @@ export class NumberAssertion extends Assertion<number> {
     const pass = (b - a) > (aAbs > bAbs ? bAbs : aAbs) * epsilon;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeDefinitelyLessThan", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("(", eB, " - ", rA, ") > ",
-        "(abs(", rA, ") > abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, "\n\n")
-        .end("hint")
-        .write("Expected number to be definetely less than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeDefinitelyLessThan", "received", "expected", "epsilon")
+        .hint(rt`(${eB} - ${rA}) > (abs(${rA}) > abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE}\n\n`)
+        .info(rt`Expected number to be definetely less than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeDefinetelyLessThan);
+      throw new AssertionError(message.compose(), this.toBeDefinetelyLessThan);
     }
 
     return this;
   }
 
-  notToBeDefinetelyLessThan(number: number, epsilon = Number.EPSILON): NumberAssertion {
+  notToBeDefinetelyLessThan(number: number, epsilon = Number.EPSILON): this {
     const a = this.obj;
     const b = number;
     const aAbs = Math.abs(a);
@@ -758,173 +729,170 @@ export class NumberAssertion extends Assertion<number> {
     const pass = !((b - a) > (aAbs > bAbs ? bAbs : aAbs) * epsilon);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeDefinitelyLessThan", "received", "expected", "epsilon"))
-        .begin("hint")
-        .write("!((", eB, " - ", rA, ") > ",
-        "(abs(", rA, ") > abs(", eB, ") ? abs(", eB, ") : abs(", rA, ")) * ", eE, ")\n\n")
-        .end("hint")
-        .write("Expected number not to be definetely less than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeDefinitelyLessThan", "received", "expected", "epsilon")
+        .hint(rt`!((${eB} - ${rA}) > (abs(${rA}) > abs(${eB}) ? abs(${eB}) : abs(${rA})) * ${eE})\n\n`)
+        .info(rt`Expected number not to be definetely less than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeDefinetelyLessThan);
+      throw new AssertionError(message.compose(), this.notToBeDefinetelyLessThan);
     }
 
     return this;
   }
 
-  toBeGreaterThan(number: number): NumberAssertion {
+  toBeGreaterThan(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = a > b;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeGreaterThan"))
-        .write("Expected number to be greater than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeGreaterThan")
+        .info(rt`Expected number to be greater than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeGreaterThan);
+      throw new AssertionError(message.compose(), this.toBeGreaterThan);
     }
 
     return this;
   }
 
-  notToBeGreaterThan(number: number): NumberAssertion {
+  notToBeGreaterThan(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = !(a > b);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeGreaterThan"))
-        .write("Expected number not to be greater than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeGreaterThan")
+        .info(rt`Expected number not to be greater than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeGreaterThan);
+      throw new AssertionError(message.compose(), this.notToBeGreaterThan);
     }
 
     return this;
   }
 
-  toBeGreaterThanOrEqual(number: number): NumberAssertion {
+  toBeGreaterThanOrEqual(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = a >= b;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeGreaterThanOrEqual"))
-        .write("Expected number to be greater than or equal to ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeGreaterThanOrEqual")
+        .info(rt`Expected number to be greater than or equal to ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeGreaterThanOrEqual);
+      throw new AssertionError(message.compose(), this.toBeGreaterThanOrEqual);
     }
 
     return this;
   }
 
-  notToBeGreaterThanOrEqual(number: number): NumberAssertion {
+  notToBeGreaterThanOrEqual(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = !(a >= b);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeGreaterThanOrEqual"))
-        .write("Expected number not to be greater than or equal to ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeGreaterThanOrEqual")
+        .info(rt`Expected number not to be greater than or equal to ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeGreaterThanOrEqual);
+      throw new AssertionError(message.compose(), this.notToBeGreaterThanOrEqual);
     }
 
     return this;
   }
 
-  toBeLessThan(number: number): NumberAssertion {
+  toBeLessThan(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = a < b;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeLessThan"))
-        .write("Expected number to be less than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeLessThan")
+        .info(rt`Expected number to be less than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeLessThan);
+      throw new AssertionError(message.compose(), this.toBeLessThan);
     }
 
     return this;
   }
 
-  notToBeLessThan(number: number): NumberAssertion {
+  notToBeLessThan(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = !(a < b);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeLessThan"))
-        .write("Expected number not to be less than ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeLessThan")
+        .info(rt`Expected number not to be less than ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeLessThan);
+      throw new AssertionError(message.compose(), this.notToBeLessThan);
     }
 
     return this;
   }
 
-  toBeLessThanOrEqual(number: number): NumberAssertion {
+  toBeLessThanOrEqual(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = a <= b;
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeLessThanOrEqual"))
-        .write("Expected number to be less than or equal to ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeLessThanOrEqual")
+        .info(rt`Expected number to be less than or equal to ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.toBeLessThanOrEqual);
+      throw new AssertionError(message.compose(), this.toBeLessThanOrEqual);
     }
 
     return this;
   }
 
-  notToBeLessThanOrEqual(number: number): NumberAssertion {
+  notToBeLessThanOrEqual(number: number): this {
     const a = this.obj;
     const b = number;
     const pass = !(a <= b);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeLessThanOrEqual"))
-        .write("Expected number not to be less than or equal to ", e(b), ", instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("notToBeLessThanOrEqual")
+        .info(rt`Expected number not to be less than or equal to ${e(b)}, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, b, this.notToBeLessThanOrEqual);
+      throw new AssertionError(message.compose(), this.notToBeLessThanOrEqual);
     }
 
     return this;
   }
 
-  toBeNaN(): NumberAssertion {
+  toBeNaN(): this {
     const a = this.obj;
     const pass = Number.isNaN(a);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("toBeNaN", "received", ""))
-        .write("Expected number to be NaN, instead received: ", r(a), "\n");
+      const message = errMsg()
+        .matcherHint("toBeNaN", "received", "")
+        .info(rt`Expected number to be NaN, instead received: ${r(a)}\n`);
 
-      throw new AssertionError(message.compose(), a, NaN, this.toBeNaN);
+      throw new AssertionError(message.compose(), this.toBeNaN);
     }
 
     return this;
   }
 
-  notToBeNaN(): NumberAssertion {
+  notToBeNaN(): this {
     const a = this.obj;
     const pass = !Number.isNaN(a);
 
     if (!pass) {
-      const message = richText()
-        .write(mh("notToBeNaN", "received", ""))
-        .write("Expected number not to be NaN\n");
+      const message = errMsg()
+        .matcherHint("notToBeNaN", "received", "")
+        .info("Expected number not to be NaN\n");
 
-      throw new AssertionError(message.compose(), a, NaN, this.notToBeNaN);
+      throw new AssertionError(message.compose(), this.notToBeNaN);
     }
 
     return this;
@@ -932,91 +900,90 @@ export class NumberAssertion extends Assertion<number> {
 }
 
 export class StringAssertion extends Assertion<string> {
-  toHaveLength(length: number): StringAssertion {
-    const received = this.obj;
+  toHaveLength(length: number): this {
+    const received = this.obj.length;
     const expected = length;
-    const pass = received.length === expected;
+    const pass = received === expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("toHaveLength"))
-        .write("Expected string to have length ", e(expected),
-        ", instead it have length ", r(received.length), "\n");
+      const message = errMsg()
+        .matcherHint("toHaveLength")
+        .info(rt`Expected string to have length ${e(expected)}, instead it have length ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHaveLength);
+      throw new AssertionError(message.compose(), this.toHaveLength);
     }
     return this;
   }
 
-  notToHaveLength(length: number): StringAssertion {
-    const received = this.obj;
+  notToHaveLength(length: number): this {
+    const received = this.obj.length;
     const expected = length;
-    const pass = received.length !== expected;
+    const pass = received !== expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHaveLength"))
-        .write("Expected string not to have length ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHaveLength")
+        .info(rt`Expected string not to have length ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHaveLength);
+      throw new AssertionError(message.compose(), this.notToHaveLength);
     }
     return this;
   }
 
-  toInclude(text: string): StringAssertion {
+  toInclude(text: string): this {
     const received = this.obj;
     const expected = text;
     const pass = received.includes(expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("toInclude"))
-        .write("Expected string to include ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toInclude")
+        .info(rt`Expected string to include ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toInclude);
+      throw new AssertionError(message.compose(), this.toInclude);
     }
     return this;
   }
 
-  notToInclude(text: string): StringAssertion {
+  notToInclude(text: string): this {
     const received = this.obj;
     const expected = text;
     const pass = !received.includes(expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToInclude"))
-        .write("Expected string not to include ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToInclude")
+        .info(rt`Expected string not to include ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToInclude);
+      throw new AssertionError(message.compose(), this.notToInclude);
     }
     return this;
   }
 
-  toMatch(text: string | RegExp): StringAssertion {
+  toMatch(text: string | RegExp): this {
     const received = this.obj;
     const expected = text;
     const pass = !!received.match(expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("toMatch"))
-        .write("Expected string to match ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toMatch")
+        .info(rt`Expected string to match ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toMatch);
+      throw new AssertionError(message.compose(), this.toMatch);
     }
     return this;
   }
 
-  notToMatch(text: string | RegExp): StringAssertion {
+  notToMatch(text: string | RegExp): this {
     const received = this.obj;
     const expected = text;
     const pass = !received.match(expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToMatch"))
-        .write("Expected string not to match ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToMatch")
+        .info(rt`Expected string not to match ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToMatch);
+      throw new AssertionError(message.compose(), this.notToMatch);
     }
     return this;
   }
@@ -1025,256 +992,248 @@ export class StringAssertion extends Assertion<string> {
 export class SymbolAssertion extends Assertion<Symbol> { }
 
 export class ObjectAssertion<T extends object> extends Assertion<T> {
-  toMatch(matcher: Matcher): ObjectAssertion<T> {
+  toMatch(matcher: Matcher): this {
     const received = this.obj;
     const expected = matcher;
     const pass = matcher.match(received);
     if (!pass) {
-      const message = richText()
-        .write(mh("toMatch"))
-        .write("Expected Object to match ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toMatch")
+        .info(rt`Expected Object to match ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toMatch);
+      throw new AssertionError(message.compose(), this.toMatch);
     }
     return this;
   }
 
-  notToMatch(matcher: Matcher): ObjectAssertion<T> {
+  notToMatch(matcher: Matcher): this {
     const received = this.obj;
     const expected = matcher;
     const pass = !matcher.match(received);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToMatch"))
-        .write("Expected Object not to match ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToMatch")
+        .info(rt`Expected Object not to match ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToMatch);
+      throw new AssertionError(message.compose(), this.notToMatch);
     }
     return this;
   }
-}
-
-export const enum RegExpFlags {
-  Global = 1,
-  IgnoreCase = 1 << 1,
-  Multiline = 1 << 2,
-  Unicode = 1 << 3,
-  Sticky = 1 << 4,
 }
 
 export class RegExpAssertion extends Assertion<RegExp> {
-  toSnapshot() {
-    return this.obj.valueOf();
+  toSnapshot(): string {
+    return this.obj.valueOf().toString();
   }
 
-  toTest(text: string): RegExpAssertion {
+  toTest(text: string): this {
     const received = this.obj;
     const expected = text;
     const pass = received.test(expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("toTest"))
-        .write("Expected RegExp to test ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("toTest")
+        .info(rt`Expected RegExp to test ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toTest);
+      throw new AssertionError(message.compose(), this.toTest);
     }
     return this;
   }
 
-  notToTest(text: string): RegExpAssertion {
+  notToTest(text: string): this {
     const received = this.obj;
     const expected = text;
     const pass = received.test(expected);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToTest"))
-        .write("Expected RegExp not to test ", e(expected), "\n")
-        .write("Received: ", r(received), "\n");
+      const message = errMsg()
+        .matcherHint("notToTest")
+        .info(rt`Expected RegExp not to test ${e(expected)}\n`)
+        .info(rt`Received: ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToTest);
+      throw new AssertionError(message.compose(), this.notToTest);
     }
     return this;
   }
 }
 
 export class MapAssertion<K, V> extends Assertion<Map<K, V>> {
-  toHaveSize(size: number): MapAssertion<K, V> {
-    const received = this.obj;
+  toHaveSize(size: number): this {
+    const received = this.obj.size;
     const expected = size;
-    const pass = received.size === expected;
+    const pass = received === expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("toHaveSize"))
-        .write("Expected Map to have size ", e(expected), ", instead it have size ", r(received.size), "\n");
+      const message = errMsg()
+        .matcherHint("toHaveSize")
+        .info(rt`Expected Map to have size ${e(expected)}, instead it have size ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHaveSize);
+      throw new AssertionError(message.compose(), this.toHaveSize);
     }
 
     return this;
   }
 
-  notToHaveSize(size: number): MapAssertion<K, V> {
-    const received = this.obj;
+  notToHaveSize(size: number): this {
+    const received = this.obj.size;
     const expected = size;
-    const pass = received.size !== expected;
+    const pass = received !== expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHaveSize"))
-        .write("Expected Map not to have size ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHaveSize")
+        .info(rt`Expected Map not to have size ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHaveSize);
+      throw new AssertionError(message.compose(), this.notToHaveSize);
     }
 
     return this;
   }
 
-  toHave(key: K): MapAssertion<K, V> {
+  toHave(key: K): this {
     const received = this.obj;
     const expected = key;
     const pass = received.has(key);
     if (!pass) {
-      const message = richText()
-        .write(mh("toHave"))
-        .write("Expected Map to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("toHave")
+        .info(rt`Expected Map to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHave);
+      throw new AssertionError(message.compose(), this.toHave);
     }
     return this;
   }
 
-  notToHave(key: K): MapAssertion<K, V> {
+  notToHave(key: K): this {
     const received = this.obj;
     const expected = key;
     const pass = !received.has(key);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHave"))
-        .write("Expected Map not to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHave")
+        .info(rt`Expected Map not to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHave);
+      throw new AssertionError(message.compose(), this.notToHave);
     }
     return this;
   }
 }
 
 export class SetAssertion<V> extends Assertion<Set<V>> {
-  toHaveSize(size: number): SetAssertion<V> {
-    const received = this.obj;
+  toHaveSize(size: number): this {
+    const received = this.obj.size;
     const expected = size;
-    const pass = received.size === expected;
+    const pass = received === expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("toHaveSize"))
-        .write("Expected Set to have size ", e(expected), ", instead it have size ", r(received.size), "\n");
+      const message = errMsg()
+        .matcherHint("toHaveSize")
+        .info(rt`Expected Set to have size ${e(expected)}, instead it have size ${r(received)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHaveSize);
+      throw new AssertionError(message.compose(), this.toHaveSize);
     }
 
     return this;
   }
 
-  notToHaveSize(size: number): SetAssertion<V> {
-    const received = this.obj;
+  notToHaveSize(size: number): this {
+    const received = this.obj.size;
     const expected = size;
-    const pass = received.size !== expected;
+    const pass = received !== expected;
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHaveSize"))
-        .write("Expected Set not to have size ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHaveSize")
+        .info(rt`Expected Set not to have size ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHaveSize);
+      throw new AssertionError(message.compose(), this.notToHaveSize);
     }
 
     return this;
   }
 
-  toHave(value: V): SetAssertion<V> {
+  toHave(value: V): this {
     const received = this.obj;
     const expected = value;
     const pass = received.has(value);
     if (!pass) {
-      const message = richText()
-        .write(mh("toHave"))
-        .write("Expected Set to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("toHave")
+        .info(rt`Expected Set to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHave);
+      throw new AssertionError(message.compose(), this.toHave);
     }
     return this;
   }
 
-  notToHave(value: V): SetAssertion<V> {
+  notToHave(value: V): this {
     const received = this.obj;
     const expected = value;
     const pass = !received.has(value);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHave"))
-        .write("Expected Set not to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHave")
+        .info(rt`Expected Set not to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHave);
+      throw new AssertionError(message.compose(), this.notToHave);
     }
     return this;
   }
 }
 
 export class WeakMapAssertion<K extends object, V> extends Assertion<WeakMap<K, V>> {
-  toHave(key: K): WeakMapAssertion<K, V> {
+  toHave(key: K): this {
     const received = this.obj;
     const expected = key;
     const pass = received.has(key);
     if (!pass) {
-      const message = richText()
-        .write(mh("toHave"))
-        .write("Expected WeakMap to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("toHave")
+        .info(rt`Expected WeakMap to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHave);
+      throw new AssertionError(message.compose(), this.toHave);
     }
     return this;
   }
 
-  notToHave(key: K): WeakMapAssertion<K, V> {
+  notToHave(key: K): this {
     const received = this.obj;
     const expected = key;
     const pass = !received.has(key);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHave"))
-        .write("Expected WeakMap not to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHave")
+        .info(rt`Expected WeakMap not to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHave);
+      throw new AssertionError(message.compose(), this.notToHave);
     }
     return this;
   }
 }
 
 export class WeakSetAssertion<V> extends Assertion<WeakSet<V>> {
-  toHave(value: V): WeakSetAssertion<V> {
+  toHave(value: V): this {
     const received = this.obj;
     const expected = value;
     const pass = received.has(value);
     if (!pass) {
-      const message = richText()
-        .write(mh("toHave"))
-        .write("Expected WeakSet to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("toHave")
+        .info(rt`Expected WeakSet to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.toHave);
+      throw new AssertionError(message.compose(), this.toHave);
     }
     return this;
   }
 
-  notToHave(value: V): WeakSetAssertion<V> {
+  notToHave(value: V): this {
     const received = this.obj;
     const expected = value;
     const pass = !received.has(value);
     if (!pass) {
-      const message = richText()
-        .write(mh("notToHave"))
-        .write("Expected WeakSet not to have ", e(expected), "\n");
+      const message = errMsg()
+        .matcherHint("notToHave")
+        .info(rt`Expected WeakSet not to have ${e(expected)}\n`);
 
-      throw new AssertionError(message.compose(), received, true, this.notToHave);
+      throw new AssertionError(message.compose(), this.notToHave);
     }
     return this;
   }

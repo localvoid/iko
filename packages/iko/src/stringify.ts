@@ -138,17 +138,6 @@ export function printInfo(
     .end("info");
 }
 
-export function mh(
-  matcherName: string,
-  received: string = "received",
-  expected: string = "expected",
-  secondArgument?: string,
-): (w: RichTextWriter) => void {
-  return function (w: RichTextWriter): void {
-    matcherHint(w, matcherName, received, expected, secondArgument);
-  };
-}
-
 export function r(value: any, raw?: boolean): (w: RichTextWriter) => void {
   return function (w: RichTextWriter): void {
     printReceived(w, value, raw);
@@ -161,8 +150,56 @@ export function e(value: any, raw?: boolean): (w: RichTextWriter) => void {
   };
 }
 
-export function info(s: string): (w: RichTextWriter) => void {
-  return function (w: RichTextWriter): void {
-    printInfo(w, s);
-  };
+export class ErrorMessageWriter extends RichTextWriter {
+  matcherHint(
+    matcherName: string,
+    received: string = "received",
+    expected: string = "expected",
+    secondArgument?: string,
+  ): this {
+    this.write(function (w: ErrorMessageWriter): void {
+      matcherHint(w, matcherName, received, expected, secondArgument);
+    });
+    return this;
+  }
+
+  hint(...ws: Array<string | RichText | ((w: RichTextWriter) => void)>): this {
+    this
+      .begin("hint")
+      .write(...ws)
+      .end("hint");
+    return this;
+  }
+
+  info(...ws: Array<string | RichText | ((w: RichTextWriter) => void)>): this {
+    this
+      .write(...ws);
+    return this;
+  }
+
+  diff(...ws: Array<string | RichText | ((w: RichTextWriter) => void)>): this {
+    this
+      .begin("diff")
+      .write(...ws)
+      .end("diff");
+    return this;
+  }
+
+  received(value: any, raw?: boolean): this {
+    this.write(function (w: ErrorMessageWriter): void {
+      printReceived(w, value, raw);
+    });
+    return this;
+  }
+
+  expected(value: any, raw?: boolean): this {
+    this.write(function (w: ErrorMessageWriter): void {
+      printExpected(w, value, raw);
+    });
+    return this;
+  }
+}
+
+export function errMsg(): ErrorMessageWriter {
+  return new ErrorMessageWriter();
 }

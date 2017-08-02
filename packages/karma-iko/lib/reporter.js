@@ -180,7 +180,7 @@ function IkoReporter(baseReporterDecorator, config, loggerFactory, formatError) 
           write(Colors.browserName(browser.name), "\n");
           write(Colors.errorTitle(`  ${Symbols.error} ${suiteName(result.suite)}${result.description}\n\n`));
 
-          if (assertionErrors) {
+          if (assertionErrors.length > 0) {
             for (let i = 0; i < assertionErrors.length; i++) {
               const error = assertionErrors[i];
               const rawMessage = error.message;
@@ -198,7 +198,7 @@ function IkoReporter(baseReporterDecorator, config, loggerFactory, formatError) 
               write(leftPad("    ", message), "\n");
               write(Colors.errorStack(formatError(stack)), "\n");
             }
-          } else if (logs) {
+          } else if (logs.length > 0) {
             for (let i = 0; i < logs.length; i++) {
               write(Colors.errorMessage(leftPad("    ", formatError(logs[i]))), "\n");
             }

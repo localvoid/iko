@@ -95,9 +95,7 @@ export class Assertion<T> {
       const message = errMsg()
         .matcherHint("notToBe")
         .info("Expected value not to be (strict inequality !==):\n")
-        .info("  ", e(expected), "\n")
-        .info("Received:\n")
-        .info("  ", r(received), "\n");
+        .info("  ", e(expected), "\n");
 
       throw new AssertionError(message.compose(), this.toBe);
     }

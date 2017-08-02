@@ -4,6 +4,11 @@
 
   var hasOwnProperty = Object.prototype.hasOwnProperty;
 
+  var context = window.__mocha_context__ = {
+    test: null,
+    index: 0
+  };
+
   var formatError = function (error) {
     var stack = error.stack;
     var message = error.message;
@@ -18,38 +23,16 @@
     }
 
     return message;
-  }
+  };
 
   var processAssertionError = function (error) {
-    if (error.name === "AssertionError") {
+    if (error.$$type === "AssertionError") {
       return {
         name: error.name,
         message: error.message,
         annotations: error.annotations,
         stack: error.stack
       };
-    }
-  }
-
-  var onTestStart = function () {
-    if (window.__test_hooks__) {
-      var hooks = window.__test_hooks__.onTestEnd;
-      if (hooks) {
-        for (var i = 0; i < hooks.length; i++) {
-          hooks[i]();
-        }
-      }
-    }
-  };
-
-  var onTestEnd = function () {
-    if (window.__test_hooks__) {
-      var hooks = window.__test_hooks__.onTestStart;
-      if (hooks) {
-        for (var i = 0; i < hooks.length; i++) {
-          hooks[i]();
-        }
-      }
     }
   };
 
@@ -77,11 +60,12 @@
       });
 
       runner.on("test", function (test) {
+        context.test = test;
+        context.index = 0;
+
         test.$startTime = Date.now();
         test.$errors = [];
         test.$assertionErrors = [];
-
-        onTestStart();
       });
 
       runner.on("pending", function (test) {
@@ -91,7 +75,6 @@
       runner.on("fail", function (test, error) {
         var simpleError = formatError(error);
         var assertionError = processAssertionError(error);
-
         if (test.type === "hook") {
           test.$errors = isDebugPage ? [error] : [simpleError];
           test.$assertionErrors = assertionError ? [assertionError] : [];
@@ -129,11 +112,9 @@
         result.suite.reverse();
 
         tc.result(result);
-
-        onTestEnd();
       })
     }
-  }
+  };
 
   // Default configuration
   var mochaConfig = {

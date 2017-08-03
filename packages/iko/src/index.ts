@@ -386,101 +386,6 @@ export class Assertion<T> {
   }
 }
 
-export class ArrayAssertion<T> extends Assertion<T[]> {
-  toHaveLength(length: number): this {
-    const received = this.obj;
-    const expected = length;
-    const pass = received.length === expected;
-    if (!pass) {
-      const message = errMsg()
-        .matcherHint("toHaveLength")
-        .info(rt`Expected array to have a length ${e(expected)} instead it have a length ${r(received.length)}\n`);
-
-      throw new AssertionError(message.compose(), this.toHaveLength);
-    }
-    return this;
-  }
-
-  notToHaveLength(length: number): this {
-    const received = this.obj;
-    const expected = length;
-    const pass = received.length !== expected;
-    if (!pass) {
-      const message = errMsg()
-        .matcherHint("notToHaveLength")
-        .info(rt`Expected array not to have a length ${e(expected)}\n`);
-
-      throw new AssertionError(message.compose(), this.notToHaveLength);
-    }
-    return this;
-  }
-
-  toContain(value: T): this {
-    const received = this.obj;
-    const expected = value;
-    const pass = received.indexOf(expected) !== -1;
-    if (!pass) {
-      const message = errMsg()
-        .matcherHint("toContain")
-        .info("Expected array to contain:\n")
-        .info("  ", e(expected), "\n")
-        .info("Received:\n")
-        .info("  ", r(received), "\n");
-
-      throw new AssertionError(message.compose(), this.toContain);
-    }
-    return this;
-  }
-
-  notToContain(value: T): this {
-    const received = this.obj;
-    const expected = value;
-    const pass = received.indexOf(expected) === -1;
-    if (!pass) {
-      const message = errMsg()
-        .matcherHint("notToContain")
-        .info("Expected array not to contain:\n")
-        .info("  ", e(expected), "\n")
-        .info("Received:\n")
-        .info("  ", r(received), "\n");
-
-      throw new AssertionError(message.compose(), this.notToContain);
-    }
-
-    return this;
-  }
-
-  toBeEqual(expected: T[]): this {
-    const received = this.obj;
-    const pass = isEqual(received, expected);
-    if (!pass) {
-      const message = errMsg()
-        .matcherHint("toBeEqual")
-        .info("Expected array to be equal (deep equality):\n")
-        .info("  ", e(expected), "\n")
-        .info("Received:\n")
-        .info("  ", r(received), "\n");
-
-      throw new AssertionError(message.compose(), this.toBeEqual);
-    }
-    return this;
-  }
-
-  notToBeEqual(expected: T[]): this {
-    const received = this.obj;
-    const pass = !isEqual(received, expected);
-    if (!pass) {
-      const message = errMsg()
-        .matcherHint("notToMatch")
-        .info("Expected array not to be equal (deep equality):\n")
-        .info("  ", e(expected), "\n");
-
-      throw new AssertionError(message.compose(), this.notToBeEqual);
-    }
-    return this;
-  }
-}
-
 export class NullAssertion extends Assertion<null> {
   constructor() {
     super(null);
@@ -1027,6 +932,75 @@ export class ObjectAssertion<T extends object> extends Assertion<T> {
 
       throw new AssertionError(message.compose(), this.notToBeEqual);
     }
+    return this;
+  }
+}
+
+export class ArrayAssertion<T> extends ObjectAssertion<T[]> {
+  constructor(obj: T[]) {
+    super(obj, "array");
+  }
+
+  toHaveLength(length: number): this {
+    const received = this.obj;
+    const expected = length;
+    const pass = received.length === expected;
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("toHaveLength")
+        .info(rt`Expected array to have a length ${e(expected)} instead it have a length ${r(received.length)}\n`);
+
+      throw new AssertionError(message.compose(), this.toHaveLength);
+    }
+    return this;
+  }
+
+  notToHaveLength(length: number): this {
+    const received = this.obj;
+    const expected = length;
+    const pass = received.length !== expected;
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("notToHaveLength")
+        .info(rt`Expected array not to have a length ${e(expected)}\n`);
+
+      throw new AssertionError(message.compose(), this.notToHaveLength);
+    }
+    return this;
+  }
+
+  toContain(value: T): this {
+    const received = this.obj;
+    const expected = value;
+    const pass = received.indexOf(expected) !== -1;
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("toContain")
+        .info("Expected array to contain:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.toContain);
+    }
+    return this;
+  }
+
+  notToContain(value: T): this {
+    const received = this.obj;
+    const expected = value;
+    const pass = received.indexOf(expected) === -1;
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("notToContain")
+        .info("Expected array not to contain:\n")
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.notToContain);
+    }
+
     return this;
   }
 }

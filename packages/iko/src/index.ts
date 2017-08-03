@@ -10,7 +10,8 @@ import { RichText } from "rtext";
 import { rt } from "rtext-writer";
 import { AssertionError } from "./error";
 import { diff } from "./diff";
-import { errMsg, r, e, stringify } from "./stringify";
+import { errMsg, r, e } from "./stringify";
+import { toSnapshot } from "./snapshot";
 import { isEqual } from "lodash";
 
 export class Assertion<T> {
@@ -20,7 +21,7 @@ export class Assertion<T> {
     this.obj = obj;
   }
 
-  toSnapshot(): string {
+  toSnapshot(): string | { lang?: string, code: string } {
     return this.obj.toString();
   }
 
@@ -910,7 +911,7 @@ export class ObjectAssertion<T extends object> extends Assertion<T> {
   }
 
   toSnapshot() {
-    return stringify(this.obj);
+    return toSnapshot(this.obj);
   }
 
   toBeEqual(expected: T): this {

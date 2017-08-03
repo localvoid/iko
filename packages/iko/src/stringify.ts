@@ -51,37 +51,21 @@ export function hl(
   return annotate(text, regexp, type);
 }
 
-export function printReceived(
-  writer: RichTextWriter,
-  value: any,
-  raw?: boolean,
-) {
-  writer
-    .begin("received")
-    .write(raw ? value : hl(stringify(value)))
-    .end("received");
-}
-
-export function printExpected(
-  writer: RichTextWriter,
-  value: any,
-  raw?: boolean,
-) {
-  writer
-    .begin("expected")
-    .write(raw ? value : hl(stringify(value)))
-    .end("expected");
-}
-
-export function r(value: any, raw?: boolean): (w: RichTextWriter) => void {
-  return function (w: RichTextWriter): void {
-    printReceived(w, value, raw);
+export function r(value: any, raw?: boolean): (writer: RichTextWriter) => void {
+  return function (writer: RichTextWriter): void {
+    writer
+      .begin("received")
+      .write(raw ? value : hl(stringify(value)))
+      .end("received");
   };
 }
 
-export function e(value: any, raw?: boolean): (w: RichTextWriter) => void {
-  return function (w: RichTextWriter): void {
-    printExpected(w, value, raw);
+export function e(value: any, raw?: boolean): (writer: RichTextWriter) => void {
+  return function (writer: RichTextWriter): void {
+    writer
+      .begin("expected")
+      .write(raw ? value : hl(stringify(value)))
+      .end("expected");
   };
 }
 
@@ -115,7 +99,7 @@ export class ErrorMessageWriter extends RichTextWriter {
 
   hint(...ws: Array<string | RichText | ((w: RichTextWriter) => void)>): this {
     this
-      .begin("hint")
+      .continue("hint")
       .write(...ws)
       .end("hint");
     return this;
@@ -123,7 +107,9 @@ export class ErrorMessageWriter extends RichTextWriter {
 
   info(...ws: Array<string | RichText | ((w: RichTextWriter) => void)>): this {
     this
-      .write(...ws);
+      .continue("info")
+      .write(...ws)
+      .end("info");
     return this;
   }
 
@@ -136,9 +122,10 @@ export class ErrorMessageWriter extends RichTextWriter {
   }
 
   received(value: any): this {
-    this.write(function (w: ErrorMessageWriter): void {
-      printReceived(w, value);
-    });
+    this
+      .begin("received")
+      .write(hl(stringify(value)))
+      .end("received");
     return this;
   }
 

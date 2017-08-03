@@ -8,6 +8,7 @@ export interface AssertionErrorColorSchema {
   "matcherHint"?: ColorSchemaModifier;
   "hint"?: ColorSchemaModifier;
 
+  "info"?: ColorSchemaModifier;
   "received"?: ColorSchemaModifier;
   "expected"?: ColorSchemaModifier;
   "highlight"?: ColorSchemaModifier;
@@ -24,6 +25,7 @@ const DEFAULT_COLOR_SCHEMA = {
   "matcherHint": "dim",
   "hint": "dim",
 
+  "info": null,
   "received": "red",
   "expected": "green",
   "highlight": "bgRed",
@@ -45,8 +47,9 @@ const PRIORITIES = {
   "+": 3,
   "-": 4,
 
-  "hint": 100,
-  "patchMark": 101,
+  "info": 100,
+  "hint": 101,
+  "patchMark": 102,
 
   "matcherHint": 1000,
   "diff": 1001,
@@ -54,14 +57,15 @@ const PRIORITIES = {
 
 const enum StateFlags {
   MatcherHint = 1,
-  Hint = 1 << 1,
-  Received = 1 << 2,
-  Expected = 1 << 3,
-  Highlight = 1 << 4,
-  Diff = 1 << 5,
-  DiffPatchMark = 1 << 6,
-  DiffAdded = 1 << 7,
-  DiffRemoved = 1 << 8,
+  Info = 1 << 1,
+  Hint = 1 << 2,
+  Received = 1 << 3,
+  Expected = 1 << 4,
+  Highlight = 1 << 5,
+  Diff = 1 << 6,
+  DiffPatchMark = 1 << 7,
+  DiffAdded = 1 << 8,
+  DiffRemoved = 1 << 9,
 }
 
 function createNewChalk(c: any, modifier: string[] | string | null): any {
@@ -98,6 +102,10 @@ export function createAssertionErrorRenderer(colors?: AssertionErrorColorSchema)
           case "matcherHint":
             newChalk = createNewChalk(newChalk, colorSchema.matcherHint);
             flags = StateFlags.MatcherHint;
+            break;
+          case "info":
+            newChalk = createNewChalk(newChalk, colorSchema.info);
+            flags = StateFlags.Info;
             break;
           case "hint":
             newChalk = createNewChalk(newChalk, colorSchema.hint);

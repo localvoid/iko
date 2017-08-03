@@ -10,18 +10,18 @@ import { RichText } from "rtext";
 import { rt } from "rtext-writer";
 import { AssertionError } from "./error";
 import { diff } from "./diff";
-import { errMsg, r, e } from "./stringify";
+import { errMsg, r, e, stringify } from "./stringify";
 import { isEqual } from "lodash";
 
 export class Assertion<T> {
-  obj: T;
+  readonly obj: T;
 
   constructor(obj: T) {
     this.obj = obj;
   }
 
-  toSnapshot(): any {
-    return this.obj;
+  toSnapshot(): string {
+    return this.obj.toString();
   }
 
   assert<E>(
@@ -806,6 +806,10 @@ export class NumberAssertion extends Assertion<number> {
 }
 
 export class StringAssertion extends Assertion<string> {
+  toSnapshot() {
+    return this.obj;
+  }
+
   toHaveLength(length: number): this {
     const received = this.obj.length;
     const expected = length;
@@ -903,6 +907,10 @@ export class ObjectAssertion<T extends object> extends Assertion<T> {
   constructor(obj: T, type = "object") {
     super(obj);
     this.type = type;
+  }
+
+  toSnapshot() {
+    return stringify(this.obj);
   }
 
   toBeEqual(expected: T): this {

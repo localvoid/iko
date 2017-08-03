@@ -7,11 +7,20 @@ recommended only for TypeScript developers.
 
 ## Features
 
- - TypeScript-friendly API
- - Nicely formatted error messages in a [rtext](https://github.com/localvoid/rtext) format
- - Side-effect free assertions
- - Using [lodash](https://lodash.com) deep equality and matching functions
- - Snapshot testing in a browser
+- TypeScript-friendly API
+- Nicely formatted error messages in a [rtext](https://github.com/localvoid/rtext) format
+- Side-effect free assertions
+- Using [lodash](https://lodash.com) deep equality and matching functions
+- Snapshot testing in a browser
+
+## Packages
+
+- [iko](https://www.npmjs.com/package/iko) Assertion library.
+- [iko-karma-snapshot](https://www.npmjs.com/package/iko-karma-snapshot) Support for
+[karma-snapshot](https://github.com/localvoid/karma-snapshot) plugin.
+- [karma-iko](https://www.npmjs.com/package/karma-iko) Improved [Mocha](https://mochajs.org) adapter and reporter for
+[Karma](https://karma-runner.github.io/).
+- [mocha-iko-reporter](https://www.npmjs.com/package/mocha-iko-reporter) Improved [Mocha](https://mochajs.org) reporter.
 
 ## Namespaces for different Types
 

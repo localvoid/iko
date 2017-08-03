@@ -1,6 +1,6 @@
 import * as prettyFormat from "pretty-format";
 import { RichText } from "rtext";
-import { RichTextWriter } from "rtext-writer";
+import { RichTextWriter, annotate } from "rtext-writer";
 
 const PLUGINS = [
   prettyFormat.plugins.HTMLElement,
@@ -31,79 +31,24 @@ export function stringify(object: any, maxDepth: number = 10): string {
     : result;
 }
 
-const NUMBERS = [
-  "zero",
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "ten",
-  "eleven",
-  "twelve",
-  "thirteen",
-];
-
-export function pluralize(word: string, count: number): string {
-  const result = ((count < NUMBERS.length) ? NUMBERS[count] : count.toString()) + " " + word;
-  if (count === 1) {
-    return result;
-  }
-  return result + "s";
+export function leftPad(p: string, s: string): string {
+  return s.replace(/^/gm, p);
 }
 
-export function matcherHint(
-  writer: RichTextWriter,
-  matcherName: string,
-  received: string = "received",
-  expected: string = "expected",
-  secondArgument?: string,
-): void {
-  writer
-    .begin("matcherHint")
-    .write("expect(")
-    .begin("received").write(received).end("received")
-    .write(`).${matcherName}(`)
-    .begin("expected").write(expected).end("expected");
-
-  if (secondArgument !== undefined) {
-    writer
-      .write(", ")
-      .begin("expected").write(secondArgument).end("expected");
-  }
-
-  writer
-    .write(")")
-    .write("\n\n")
-    .end("matcherHint");
-}
-
-export function highlightTrailingWhitespace(
+/**
+ * hl is a function that highlights matched text regions. By default it highlights trailing whitespaces.
+ *
+ * @param text Raw text.
+ * @param regexp RegExp matcher.
+ * @param type Annotation type.
+ * @returns Rich Text.
+ */
+export function hl(
   text: string,
+  regexp = /\s+$/gm,
+  type = "highlight",
 ): RichText {
-  const re = /\s+$/gm;
-  let match = re.exec(text);
-  const annotations = [];
-  while (match !== null) {
-    const start = match.index;
-    const end = start + match[0].length;
-    annotations.push({
-      type: "trailingWhitespace",
-      start: start,
-      end: end,
-      data: undefined,
-      key: undefined,
-    });
-    match = re.exec(text);
-  }
-  return {
-    text: text,
-    annotations: annotations.length === 0 ? undefined : annotations,
-  };
+  return annotate(text, regexp, type);
 }
 
 export function printReceived(
@@ -113,7 +58,7 @@ export function printReceived(
 ) {
   writer
     .begin("received")
-    .write(raw ? value : highlightTrailingWhitespace(stringify(value)))
+    .write(raw ? value : hl(stringify(value)))
     .end("received");
 }
 
@@ -124,18 +69,8 @@ export function printExpected(
 ) {
   writer
     .begin("expected")
-    .write(raw ? value : highlightTrailingWhitespace(stringify(value)))
+    .write(raw ? value : hl(stringify(value)))
     .end("expected");
-}
-
-export function printInfo(
-  writer: RichTextWriter,
-  s: string,
-) {
-  writer
-    .begin("info")
-    .write(s)
-    .end("info");
 }
 
 export function r(value: any, raw?: boolean): (w: RichTextWriter) => void {
@@ -157,9 +92,24 @@ export class ErrorMessageWriter extends RichTextWriter {
     expected: string = "expected",
     secondArgument?: string,
   ): this {
-    this.write(function (w: ErrorMessageWriter): void {
-      matcherHint(w, matcherName, received, expected, secondArgument);
-    });
+    this
+      .begin("matcherHint")
+      .write("expect(")
+      .begin("received").write(received).end("received")
+      .write(`).${matcherName}(`)
+      .begin("expected").write(expected).end("expected");
+
+    if (secondArgument !== undefined) {
+      this
+        .write(", ")
+        .begin("expected").write(secondArgument).end("expected");
+    }
+
+    this
+      .write(")")
+      .write("\n\n")
+      .end("matcherHint");
+
     return this;
   }
 
@@ -185,17 +135,18 @@ export class ErrorMessageWriter extends RichTextWriter {
     return this;
   }
 
-  received(value: any, raw?: boolean): this {
+  received(value: any): this {
     this.write(function (w: ErrorMessageWriter): void {
-      printReceived(w, value, raw);
+      printReceived(w, value);
     });
     return this;
   }
 
-  expected(value: any, raw?: boolean): this {
-    this.write(function (w: ErrorMessageWriter): void {
-      printExpected(w, value, raw);
-    });
+  expected(value: any): this {
+    this
+      .begin("expected")
+      .write(hl(stringify(value)))
+      .end("expected");
     return this;
   }
 }

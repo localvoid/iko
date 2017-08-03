@@ -2,19 +2,15 @@ import * as prettyFormat from "pretty-format";
 import { RichText } from "rtext";
 import { RichTextWriter, richText } from "rtext-writer";
 import { diffLines, structuredPatch, IHunk } from "diff";
-import { highlightTrailingWhitespace } from "./stringify";
+import { errMsg, hl } from "./stringify";
 
-const NO_DIFF_MESSAGE = richText()
-  .begin("hint")
-  .write("Compared values have no visual difference.")
-  .end("hint")
+const NO_DIFF_MESSAGE = errMsg()
+  .hint("Compared values have no visual difference.")
   .compose();
 
-const SIMILAR_MESSAGE = richText()
-  .begin("hint")
-  .write("Compared values serialize to the same structure.\n")
-  .write("Printing internal object structure without calling `toJSON` instead.")
-  .end("hint")
+const SIMILAR_MESSAGE = errMsg()
+  .hint("Compared values serialize to the same structure.\n")
+  .hint("Printing internal object structure without calling `toJSON` instead.")
   .compose();
 
 const DIFF_CONTEXT = 5;
@@ -49,16 +45,16 @@ function _diffLines(a: string, b: string): RichText | null {
     if (part.added) {
       isDifferent = true;
       while (j < lines.length) {
-        result.begin("+").write("+ ", highlightTrailingWhitespace(lines[j++]), "\n").end("+");
+        result.begin("+").write("+ ", hl(lines[j++]), "\n").end("+");
       }
     } else if (part.removed) {
       isDifferent = true;
       while (j < lines.length) {
-        result.begin("-").write("- ", highlightTrailingWhitespace(lines[j++]), "\n").end("-");
+        result.begin("-").write("- ", hl(lines[j++]), "\n").end("-");
       }
     } else {
       while (j < lines.length) {
-        result.write("  ", highlightTrailingWhitespace(lines[j++]), "\n");
+        result.write("  ", hl(lines[j++]), "\n");
       }
     }
   }
@@ -115,7 +111,7 @@ function _structuredPatch(a: string, b: string): RichText | null {
     const lines = hunk.lines;
     for (let j = 0; j < lines.length; j++) {
       const line = lines[j];
-      const highlightedLined = highlightTrailingWhitespace(line);
+      const highlightedLined = hl(line);
       const added = line.charCodeAt(0) === 43; // +
       const removed = line.charCodeAt(0) === 45; // -
       if (added === true) {

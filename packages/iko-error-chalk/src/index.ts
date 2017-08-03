@@ -10,14 +10,14 @@ export interface AssertionErrorColorSchema {
 
   "received"?: ColorSchemaModifier;
   "expected"?: ColorSchemaModifier;
-  "trailingWhitespace"?: ColorSchemaModifier;
+  "highlight"?: ColorSchemaModifier;
 
   "diff"?: ColorSchemaModifier;
   "diffPatchMark"?: ColorSchemaModifier;
   "diffAdded"?: ColorSchemaModifier;
   "diffRemoved"?: ColorSchemaModifier;
-  "diffAddedTrailingWhitespace"?: ColorSchemaModifier;
-  "diffRemovedTrailingWhitespace"?: ColorSchemaModifier;
+  "diffAddedHighlight"?: ColorSchemaModifier;
+  "diffRemovedHighlight"?: ColorSchemaModifier;
 }
 
 const DEFAULT_COLOR_SCHEMA = {
@@ -26,18 +26,18 @@ const DEFAULT_COLOR_SCHEMA = {
 
   "received": "red",
   "expected": "green",
-  "trailingWhitespace": "bgRed",
+  "highlight": "bgRed",
 
   "diff": null,
   "diffPatchMark": "dim",
   "diffAdded": "green",
   "diffRemoved": "red",
-  "diffAddedTrailingWhitespace": "bgGreen",
-  "diffRemovedTrailingWhitespace": "bgRed",
+  "diffAddedHighlight": "bgGreen",
+  "diffRemovedHighlight": "bgRed",
 };
 
 const PRIORITIES = {
-  "trailingWhitespace": 0,
+  "highlight": 0,
 
   "received": 1,
   "expected": 2,
@@ -57,7 +57,7 @@ const enum StateFlags {
   Hint = 1 << 1,
   Received = 1 << 2,
   Expected = 1 << 3,
-  TrailingWhitespace = 1 << 4,
+  Highlight = 1 << 4,
   Diff = 1 << 5,
   DiffPatchMark = 1 << 6,
   DiffAdded = 1 << 7,
@@ -127,17 +127,17 @@ export function createAssertionErrorRenderer(colors?: AssertionErrorColorSchema)
             newChalk = createNewChalk(newChalk, colorSchema.diffRemoved);
             flags = StateFlags.DiffRemoved;
             break;
-          case "trailingWhitespace":
+          case "highlight":
             if ((flags & (StateFlags.DiffAdded | StateFlags.DiffRemoved)) !== 0) {
               if ((flags & StateFlags.DiffAdded) !== 0) {
-                newChalk = createNewChalk(newChalk, colorSchema.diffAddedTrailingWhitespace);
+                newChalk = createNewChalk(newChalk, colorSchema.diffAddedHighlight);
               } else {
-                newChalk = createNewChalk(newChalk, colorSchema.diffRemovedTrailingWhitespace);
+                newChalk = createNewChalk(newChalk, colorSchema.diffRemovedHighlight);
               }
             } else {
-              newChalk = createNewChalk(newChalk, colorSchema.trailingWhitespace);
+              newChalk = createNewChalk(newChalk, colorSchema.highlight);
             }
-            flags = StateFlags.TrailingWhitespace;
+            flags = StateFlags.Highlight;
             break;
         }
 

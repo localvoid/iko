@@ -1,6 +1,5 @@
 export { AssertionError } from "./error";
-export { ErrorMessageWriter, errMsg, r, e, stringify } from "./stringify";
-export { Matcher, m } from "./matcher";
+export { ErrorMessageWriter, errMsg, r, e, hl, stringify } from "./stringify";
 export { diff } from "./diff";
 
 /**
@@ -12,7 +11,7 @@ import { rt } from "rtext-writer";
 import { AssertionError } from "./error";
 import { diff } from "./diff";
 import { errMsg, r, e } from "./stringify";
-import { Matcher, matchArray, matchException } from "./matcher";
+import { isEqual } from "lodash";
 
 export class Assertion<T> {
   obj: T;
@@ -416,12 +415,10 @@ export class ArrayAssertion<T> extends Assertion<T[]> {
     return this;
   }
 
-  toContain(value: T | Matcher): this {
+  toContain(value: T): this {
     const received = this.obj;
     const expected = value;
-    const pass = expected instanceof Matcher ?
-      received.some((i) => expected.match(i)) :
-      received.indexOf(expected) !== -1;
+    const pass = received.indexOf(expected) !== -1;
     if (!pass) {
       const message = errMsg()
         .matcherHint("toContain")
@@ -435,12 +432,10 @@ export class ArrayAssertion<T> extends Assertion<T[]> {
     return this;
   }
 
-  notToContain(value: T | Matcher): this {
+  notToContain(value: T): this {
     const received = this.obj;
     const expected = value;
-    const pass = expected instanceof Matcher ?
-      !received.some((i) => expected.match(i)) :
-      received.indexOf(expected) === -1;
+    const pass = received.indexOf(expected) === -1;
     if (!pass) {
       const message = errMsg()
         .matcherHint("notToContain")
@@ -455,34 +450,32 @@ export class ArrayAssertion<T> extends Assertion<T[]> {
     return this;
   }
 
-  toMatch(match: T[]): this {
+  toBeEqual(expected: T[]): this {
     const received = this.obj;
-    const expected = match;
-    const pass = matchArray(received, expected);
+    const pass = isEqual(received, expected);
     if (!pass) {
       const message = errMsg()
-        .matcherHint("toMatch")
-        .info("Expected array to match:\n")
+        .matcherHint("toBeEqual")
+        .info("Expected array to be equal (deep equality):\n")
         .info("  ", e(expected), "\n")
         .info("Received:\n")
         .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), this.toMatch);
+      throw new AssertionError(message.compose(), this.toBeEqual);
     }
     return this;
   }
 
-  notToMatch(match: T[]): this {
+  notToBeEqual(expected: T[]): this {
     const received = this.obj;
-    const expected = match;
-    const pass = !matchArray(received, expected);
+    const pass = !isEqual(received, expected);
     if (!pass) {
       const message = errMsg()
         .matcherHint("notToMatch")
-        .info("Expected array not to match:\n")
+        .info("Expected array not to be equal (deep equality):\n")
         .info("  ", e(expected), "\n");
 
-      throw new AssertionError(message.compose(), this.notToMatch);
+      throw new AssertionError(message.compose(), this.notToBeEqual);
     }
     return this;
   }
@@ -502,8 +495,22 @@ export class UndefinedAssertion extends Assertion<undefined> {
 
 export class BooleanAssertion extends Assertion<boolean> { }
 
-export class DateAssertion extends Assertion<Date> { }
-export class ErrorAssertion<E extends Error> extends Assertion<E> { }
+function matchException(a: any, b: string | Error | ErrorConstructor): boolean {
+  if (typeof b === "string") {
+    if (typeof a === "string" && a.indexOf(b) !== -1) {
+      return true;
+    } else if (a instanceof Error && a.message.indexOf(b) !== -1) {
+      return true;
+    }
+  } else {
+    if (b instanceof Error) {
+      return a.constructor === b.constructor || a instanceof b.constructor;
+    } else if (b.prototype instanceof Error || b === Error) {
+      return a.constructor === b || a instanceof b;
+    }
+  }
+  return false;
+}
 
 export class FunctionAssertion extends Assertion<Function> {
   toHaveArgumentsLength(length: number): this {
@@ -534,14 +541,12 @@ export class FunctionAssertion extends Assertion<Function> {
     return this;
   }
 
-  toThrow<E extends Error | ErrorConstructor>(expected?: E): this {
+  toThrow<E extends Error | ErrorConstructor>(expected?: string | E): this {
     let pass = false;
-    let throwed;
     try {
       this.obj();
     } catch (e) {
-      throwed = e;
-      if (expected !== undefined && matchException(throwed, expected) === true) {
+      if (expected !== undefined && matchException(e, expected) === true) {
         pass = true;
       }
     }
@@ -557,14 +562,12 @@ export class FunctionAssertion extends Assertion<Function> {
     return this;
   }
 
-  notToThrow<E extends Error | ErrorConstructor>(expected?: E): this {
+  notToThrow<E extends Error | ErrorConstructor>(expected?: string | E): this {
     let pass = true;
-    let throwed;
     try {
       this.obj();
     } catch (e) {
-      throwed = e;
-      if (expected !== undefined && matchException(throwed, expected) === true) {
+      if (expected !== undefined && matchException(e, expected) === true) {
         pass = false;
       }
     }
@@ -990,38 +993,61 @@ export class StringAssertion extends Assertion<string> {
 export class SymbolAssertion extends Assertion<Symbol> { }
 
 export class ObjectAssertion<T extends object> extends Assertion<T> {
-  toMatch(matcher: Matcher): this {
+  readonly type: string;
+
+  constructor(obj: T, type = "object") {
+    super(obj);
+    this.type = type;
+  }
+
+  toBeEqual(expected: T): this {
     const received = this.obj;
-    const expected = matcher;
-    const pass = matcher.match(received);
+    const pass = isEqual(received, expected);
     if (!pass) {
       const message = errMsg()
-        .matcherHint("toMatch")
-        .info(rt`Expected Object to match ${e(expected)}\n`)
-        .info(rt`Received: ${r(received)}\n`);
+        .matcherHint("toBeEqual")
+        .info(`Expected ${this.type} to be equal (deep equality):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
 
-      throw new AssertionError(message.compose(), this.toMatch);
+      throw new AssertionError(message.compose(), this.toBeEqual);
     }
     return this;
   }
 
-  notToMatch(matcher: Matcher): this {
+  notToBeEqual(expected: T): this {
     const received = this.obj;
-    const expected = matcher;
-    const pass = !matcher.match(received);
+    const pass = !isEqual(received, expected);
     if (!pass) {
       const message = errMsg()
         .matcherHint("notToMatch")
-        .info(rt`Expected Object not to match ${e(expected)}\n`)
-        .info(rt`Received: ${r(received)}\n`);
+        .info(`Expected ${this.type} not to be equal (deep equality):\n`)
+        .info("  ", e(expected), "\n");
 
-      throw new AssertionError(message.compose(), this.notToMatch);
+      throw new AssertionError(message.compose(), this.notToBeEqual);
     }
     return this;
   }
 }
 
-export class RegExpAssertion extends Assertion<RegExp> {
+export class DateAssertion extends ObjectAssertion<Date> {
+  constructor(obj: Date) {
+    super(obj, "Date");
+  }
+}
+
+export class ErrorAssertion<E extends Error> extends ObjectAssertion<E> {
+  constructor(obj: E) {
+    super(obj, "Error");
+  }
+}
+
+export class RegExpAssertion extends ObjectAssertion<RegExp> {
+  constructor(obj: RegExp) {
+    super(obj, "RegExp");
+  }
+
   toSnapshot(): string {
     return this.obj.valueOf().toString();
   }
@@ -1057,7 +1083,11 @@ export class RegExpAssertion extends Assertion<RegExp> {
   }
 }
 
-export class MapAssertion<K, V> extends Assertion<Map<K, V>> {
+export class MapAssertion<K, V> extends ObjectAssertion<Map<K, V>> {
+  constructor(obj: Map<K, V>) {
+    super(obj, "Map");
+  }
+
   toHaveSize(size: number): this {
     const received = this.obj.size;
     const expected = size;
@@ -1117,7 +1147,11 @@ export class MapAssertion<K, V> extends Assertion<Map<K, V>> {
   }
 }
 
-export class SetAssertion<V> extends Assertion<Set<V>> {
+export class SetAssertion<V> extends ObjectAssertion<Set<V>> {
+  constructor(obj: Set<V>) {
+    super(obj, "Set");
+  }
+
   toHaveSize(size: number): this {
     const received = this.obj.size;
     const expected = size;
@@ -1177,7 +1211,11 @@ export class SetAssertion<V> extends Assertion<Set<V>> {
   }
 }
 
-export class WeakMapAssertion<K extends object, V> extends Assertion<WeakMap<K, V>> {
+export class WeakMapAssertion<K extends object, V> extends ObjectAssertion<WeakMap<K, V>> {
+  constructor(obj: WeakMap<K, V>) {
+    super(obj, "WeakMap");
+  }
+
   toHave(key: K): this {
     const received = this.obj;
     const expected = key;
@@ -1207,7 +1245,11 @@ export class WeakMapAssertion<K extends object, V> extends Assertion<WeakMap<K, 
   }
 }
 
-export class WeakSetAssertion<V> extends Assertion<WeakSet<V>> {
+export class WeakSetAssertion<V> extends ObjectAssertion<WeakSet<V>> {
+  constructor(obj: WeakSet<V>) {
+    super(obj, "WeakSet");
+  }
+
   toHave(value: V): this {
     const received = this.obj;
     const expected = value;

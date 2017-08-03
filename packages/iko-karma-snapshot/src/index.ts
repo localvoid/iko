@@ -1,4 +1,4 @@
-import { Assertion, AssertionError, diff, errMsg, e, r } from "iko";
+import { Assertion, AssertionError, diff, errMsg } from "iko";
 
 declare global {
   interface Snapshot {
@@ -69,13 +69,10 @@ Assertion.prototype.toMatchSnapshot = function (update?: boolean) {
       if (!pass) {
         const diffText = diff(expected, received);
         const message = errMsg()
-          .matcherHint("toMatchsnapshot", "received", "")
-          .info(`Expected value to match snapshot ${index}:\n`)
-          .info("  ", e(expected), "\n")
-          .info("Received:\n")
-          .info("  ", r(received), "\n");
+          .matcherHint("toMatchSnapshot", "received", "")
+          .info(`Expected value to match snapshot ${index}\n`);
         if (diffText !== null) {
-          message.diff("\n", "Difference:\n\n", diffText);
+          message.diff("\n", diffText);
         }
         throw new AssertionError(message.compose(), this.toMatchSnapshot);
       }

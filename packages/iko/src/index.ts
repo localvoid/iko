@@ -12,7 +12,7 @@ import { AssertionError } from "./error";
 import { diff } from "./diff";
 import { errMsg, r, e } from "./stringify";
 import { toSnapshot } from "./snapshot";
-import { isEqual } from "lodash";
+import { isEqual, isEqualWith, isMatch, isMatchWith, isMatchCustomizer } from "lodash";
 
 export class Assertion<T> {
   readonly obj: T;
@@ -920,7 +920,7 @@ export class ObjectAssertion<T extends object> extends Assertion<T> {
     if (!pass) {
       const message = errMsg()
         .matcherHint("toBeEqual")
-        .info(`Expected ${this.type} to be equal (deep equality):\n`)
+        .info(`Expected ${this.type} to be equal (_.isEqual()):\n`)
         .info("  ", e(expected), "\n")
         .info("Received:\n")
         .info("  ", r(received), "\n");
@@ -936,10 +936,106 @@ export class ObjectAssertion<T extends object> extends Assertion<T> {
     if (!pass) {
       const message = errMsg()
         .matcherHint("notToMatch")
-        .info(`Expected ${this.type} not to be equal (deep equality):\n`)
+        .info(`Expected ${this.type} not to be equal (!_.isEqual()):\n`)
         .info("  ", e(expected), "\n");
 
       throw new AssertionError(message.compose(), this.notToBeEqual);
+    }
+    return this;
+  }
+
+  toBeEqualWith(expected: T, customizer: isMatchCustomizer): this {
+    const received = this.obj;
+    const pass = isEqualWith(received, expected, customizer);
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("toBeEqualWith", "received", "expected", "customizer")
+        .info(`Expected ${this.type} to be equal with (_.isEqualWith()):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.toBeEqualWith);
+    }
+    return this;
+  }
+
+  notToBeEqualWith(expected: T, customizer: isMatchCustomizer): this {
+    const received = this.obj;
+    const pass = !isEqualWith(received, expected, customizer);
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("notToBeEqualWith", "received", "expected", "customizer")
+        .info(`Expected ${this.type} to be equal with (!_.isEqualWith()):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.notToBeEqualWith);
+    }
+    return this;
+  }
+
+  toMatch(expected: any): this {
+    const received = this.obj;
+    const pass = isMatch(received, expected);
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("toMatch")
+        .info(`Expected ${this.type} to match (_.isMatch()):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.toMatch);
+    }
+    return this;
+  }
+
+  notToMatch(expected: any): this {
+    const received = this.obj;
+    const pass = !isMatch(received, expected);
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("notToMatch")
+        .info(`Expected ${this.type} not to match (!_.isMatch()):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.notToMatch);
+    }
+    return this;
+  }
+
+  toMatchWith(expected: any, customizer: isMatchCustomizer): this {
+    const received = this.obj;
+    const pass = isMatchWith(received, expected, customizer);
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("toMatchWith", "received", "expected", "customizer")
+        .info(`Expected ${this.type} to match with customizer (_.isMatchWith()):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.toMatchWith);
+    }
+    return this;
+  }
+
+  notToMatchWith(expected: any, customizer: isMatchCustomizer): this {
+    const received = this.obj;
+    const pass = !isMatchWith(received, expected, customizer);
+    if (!pass) {
+      const message = errMsg()
+        .matcherHint("notToMatchWith", "received", "expected", "customizer")
+        .info(`Expected ${this.type} not to match with customizer (!_.isMatchWith()):\n`)
+        .info("  ", e(expected), "\n")
+        .info("Received:\n")
+        .info("  ", r(received), "\n");
+
+      throw new AssertionError(message.compose(), this.notToMatchWith);
     }
     return this;
   }

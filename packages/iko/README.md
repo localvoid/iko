@@ -10,6 +10,7 @@ recommended only for TypeScript developers.
  - TypeScript-friendly API
  - Nicely formatted error messages in a [rtext](https://github.com/localvoid/rtext) format
  - Side-effect free assertions
+ - Using [lodash](https://lodash.com) deep equality and matching functions
  - Snapshot testing in a browser
 
 ## Namespaces for different Types
@@ -194,8 +195,14 @@ class ObjectAssertion<T extends object> extends Assertion<T> {
   constructor(obj: T, type = "object");
 
   toBeEqual(expected: T): this;
+  toBeEqualWith(expected: T, customizer: isMatchCustomizer): this;
+  toMatch(expected: any): this;
+  toMatchWith(expected: any, customizer: isMatchCustomizer): this;
 
   notToBeEqual(expected: T): this;
+  notToBeEqualWith(expected: T, customizer: isMatchCustomizer): this;
+  notToMatch(expected: any): this;
+  notToMatchWith(expected: any, customizer: isMatchCustomizer): this;
 }
 
 class ArrayAssertion<T> extends ObjectAssertion<T[]> {

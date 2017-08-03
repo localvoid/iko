@@ -103,7 +103,7 @@ class Assertion<T> {
 
   constructor(obj: T);
 
-  toSnapshot(): string;
+  toSnapshot(): string | { lang?: string, code: string };
 
   assert<E>(
     expr: (() => boolean) | boolean,

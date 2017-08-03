@@ -3,6 +3,8 @@
 This library and its API is designed to provide a good developer experience in TypeScript environment, so it is
 recommended only for TypeScript developers.
 
+![iko screenshot][screenshot]
+
 ## Features
 
  - TypeScript-friendly API
@@ -97,7 +99,7 @@ class Assertion<T> {
 
   constructor(obj: T);
 
-  toSnapshot(): string;
+  toSnapshot(): string | { lang?: string, code: string };
 
   assert<E>(
     expr: (() => boolean) | boolean,
@@ -241,3 +243,5 @@ class WeakSetAssertion<V> extends ObjectAssertion<WeakSet<V>> {
 ## License
 
 MIT
+
+[screenshot]: https://localvoid.github.io/karma-snapshot/images/example.png "iko screenshot"

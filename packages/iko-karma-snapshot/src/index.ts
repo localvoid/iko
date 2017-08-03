@@ -20,6 +20,7 @@ declare global {
     suite: SnapshotSuite;
     get(path: string[], index: number): Snapshot | undefined;
     set(path: string[], index: number, code: string, lang?: boolean): void;
+    match(received: string, expected: string): boolean;
   }
 
   interface MochaContext {
@@ -64,7 +65,7 @@ Assertion.prototype.toMatchSnapshot = function (update?: boolean) {
       snapshotState.set(path, index, received, undefined);
     } else {
       const expected = snapshot.code;
-      const pass = received === expected;
+      const pass = snapshotState.match(received, expected);
 
       if (!pass) {
         const diffText = diff(expected, received);

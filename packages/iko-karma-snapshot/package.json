@@ -41,6 +41,7 @@
     "dist:cjs": "../../node_modules/.bin/tsc -p ./tsconfig.build.cjs.json"
   },
   "peerDependencies": {
+    "karma-snapshot": "^0.5.1",
     "rtext-writer": "^0.1.0",
     "tslib": "^1.7.1",
     "iko": "^0.3.0"

@@ -19,7 +19,7 @@ declare global {
     update?: boolean;
     suite: SnapshotSuite;
     get(path: string[], index: number): Snapshot | undefined;
-    set(path: string[], index: number, code: string, lang?: boolean): void;
+    set(path: string[], index: number, code: string, lang?: string): void;
     match(received: string, expected: string): boolean;
   }
 
@@ -53,16 +53,21 @@ function snapshotPath(node: any) {
 }
 
 Assertion.prototype.toMatchSnapshot = function (update?: boolean) {
-  const received = this.toSnapshot();
+  let received = this.toSnapshot();
+  let lang;
+  if (typeof received === "object") {
+    lang = received.lang;
+    received = received.code;
+  }
   const path = snapshotPath(context.test);
   const index = context.index++;
 
   if (update || snapshotState.update) {
-    snapshotState.set(path, index, received, undefined);
+    snapshotState.set(path, index, received, lang);
   } else {
     const snapshot = snapshotState.get(path, index);
     if (!snapshot) {
-      snapshotState.set(path, index, received, undefined);
+      snapshotState.set(path, index, received, lang);
     } else {
       const expected = snapshot.code;
       const pass = snapshotState.match(received, expected);

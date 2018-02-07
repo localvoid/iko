@@ -338,7 +338,7 @@ export class Assertion<T> {
     return this as any as SetAssertion<V>;
   }
 
-  toBeWeakSet<V = any>(): WeakSetAssertion<V> {
+  toBeWeakSet<V extends object = any>(): WeakSetAssertion<V> {
     const received = this.obj;
     const pass = typeof received === "object" && received instanceof WeakSet;
     if (!pass) {
@@ -1324,7 +1324,7 @@ export class WeakMapAssertion<K extends object, V> extends ObjectAssertion<WeakM
   }
 }
 
-export class WeakSetAssertion<V> extends ObjectAssertion<WeakSet<V>> {
+export class WeakSetAssertion<V extends object> extends ObjectAssertion<WeakSet<V>> {
   constructor(obj: WeakSet<V>) {
     super(obj, "WeakSet");
   }
@@ -1441,7 +1441,7 @@ export function expect(obj: RegExp): RegExpAssertion;
 export function expect<K, V>(obj: Map<K, V>): MapAssertion<K, V>;
 export function expect<K extends object, V>(obj: WeakMap<K, V>): WeakMapAssertion<K, V>;
 export function expect<V>(obj: Set<V>): SetAssertion<V>;
-export function expect<V>(obj: WeakSet<V>): WeakSetAssertion<V>;
+export function expect<V extends object>(obj: WeakSet<V>): WeakSetAssertion<V>;
 export function expect<T>(obj: T): Assertion<T>;
 export function expect(obj: any): Assertion<any> {
   return assertionFactory(obj);

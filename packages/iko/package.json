@@ -1,6 +1,6 @@
 {
   "name": "iko",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "main": "dist/cjs/index.js",
   "module": "dist/es5/index.js",
   "es2015": "dist/es6/index.js",
@@ -41,16 +41,17 @@
     "dist:cjs": "../../node_modules/.bin/tsc -p ./tsconfig.build.cjs.json"
   },
   "peerDependencies": {
-    "tslib": "^1.7.1"
+    "tslib": "^1.9.0"
   },
   "dependencies": {
-    "babel-runtime": "^6.25.0",
-    "diff": "^3.3.0",
-    "lodash": "^4.17.4",
-    "pretty-format": "^20.0.3",
-    "rtext": "^0.1.0"
+    "babel-runtime": "^6.26.0",
+    "diff": "^3.4.0",
+    "lodash": "^4.17.5",
+    "pretty-format": "^22.1.0",
+    "rtext": "^0.1.0",
+    "rtext-writer": "^0.1.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.71"
+    "@types/lodash": "^4.14.101"
   }
 }

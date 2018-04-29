@@ -3,9 +3,11 @@ import { RichText } from "rtext";
 import { RichTextWriter, annotate } from "rtext-writer";
 
 const PLUGINS = [
-  prettyFormat.plugins.HTMLElement,
+  prettyFormat.plugins.DOMCollection,
+  prettyFormat.plugins.DOMElement,
+  prettyFormat.plugins.Immutable,
   prettyFormat.plugins.AsymmetricMatcher,
-].concat(prettyFormat.plugins.Immutable);
+];
 
 export function stringify(object: any, maxDepth: number = 10): string {
   const MAX_LENGTH = 10000;

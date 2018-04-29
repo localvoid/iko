@@ -16,9 +16,11 @@ const SIMILAR_MESSAGE = errMsg()
 const DIFF_CONTEXT = 5;
 
 const PLUGINS = [
-  prettyFormat.plugins.HTMLElement,
+  prettyFormat.plugins.DOMCollection,
+  prettyFormat.plugins.DOMElement,
+  prettyFormat.plugins.Immutable,
   prettyFormat.plugins.AsymmetricMatcher,
-].concat(prettyFormat.plugins.Immutable);
+];
 const FORMAT_OPTIONS = {
   plugins: PLUGINS,
 };

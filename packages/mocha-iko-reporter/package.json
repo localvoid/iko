@@ -30,7 +30,7 @@
   "scripts": {},
   "peerDependencies": {},
   "dependencies": {
-    "chalk": "^2.3.0",
+    "chalk": "^2.4.1",
     "iko-error-chalk": "^0.1.1"
   },
   "devDependencies": {}

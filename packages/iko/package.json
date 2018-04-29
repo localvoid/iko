@@ -45,13 +45,13 @@
   },
   "dependencies": {
     "babel-runtime": "^6.26.0",
-    "diff": "^3.4.0",
-    "lodash": "^4.17.5",
-    "pretty-format": "^22.1.0",
+    "diff": "^3.5.0",
+    "lodash": "^4.17.10",
+    "pretty-format": "^22.4.3",
     "rtext": "^0.1.0",
     "rtext-writer": "^0.1.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.101"
+    "@types/lodash": "^4.14.108"
   }
 }

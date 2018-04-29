@@ -1,6 +1,6 @@
 {
   "name": "iko",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "main": "dist/cjs/index.js",
   "module": "dist/es5/index.js",
   "es2015": "dist/es6/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "iko-karma-snapshot",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "main": "dist/cjs/index.js",
   "module": "dist/es5/index.js",
   "es2015": "dist/es6/index.js",
@@ -41,11 +41,9 @@
     "dist:cjs": "../../node_modules/.bin/tsc -p ./tsconfig.build.cjs.json"
   },
   "peerDependencies": {
+    "iko": "^0.5.0",
     "karma-snapshot": "^0.6.0",
     "rtext-writer": "^0.1.1",
-    "tslib": "^1.9.0",
-    "iko": "^0.5.0"
-  },
-  "dependencies": {},
-  "devDependencies": {}
+    "tslib": "^1.9.0"
+  }
 }

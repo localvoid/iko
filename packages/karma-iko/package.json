@@ -1,6 +1,6 @@
 {
   "name": "karma-iko",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "main": "lib/index.js",
   "description": "Karma reporter for iko assertion library",
   "license": "MIT",
@@ -36,8 +36,7 @@
   },
   "dependencies": {
     "chalk": "^2.4.1",
-    "iko-error-chalk": "^0.1.1",
+    "iko-error-chalk": "^0.2.0",
     "minimist": "^1.2.0"
-  },
-  "devDependencies": {}
+  }
 }
